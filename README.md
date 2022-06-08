@@ -147,21 +147,21 @@ The diagram below shows the different components that are involved:
 ### Initial Launch
 
 When the app is launched, the first class launched is
-[`FhirApplication`](src/main/java/com/google/android/fhir/demo/FhirApplication.kt)
+[`FhirApplication`](demo/src/main/java/com/google/fhir/examples/demo/FhirApplication.kt)
 , as it is a subclass of
 [`Application`](https://developer.android.com/reference/android/app/Application)
 and specified in the `"android:name"` field in
-[`AndroidManifest.xml`](src/main/AndroidManifest.xml). Part of the
+[`AndroidManifest.xml`](demo/src/main/AndroidManifest.xml). Part of the
 `FhirApplication` class instantiates a
-[`ServerConfiguration`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/android/fhir/FhirEngineProvider.kt#L129).
+[`ServerConfiguration`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/fhir/examples/FhirEngineProvider.kt#L129).
 We pass into the `ServerConfiguration` the URL of the FHIR Access Proxy. As we
 are running the Proxy and the App from the same machine, we use
 [`10.0.2.2`](https://developer.android.com/studio/run/emulator-networking) as a
 special alias to the host loopback interface (i.e., 127.0.0.1 on the same
 machine). We also pass into the `ServerConfiguration` an instance of
-[`Authenticator`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/android/fhir/sync/Authenticator.kt)
+[`Authenticator`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/fhir/examples/sync/Authenticator.kt)
 for supplying the Proxy the JWT access token;
-[`LoginRepository`](src/main/java/com/google/android/fhir/demo/LoginRepository.kt)
+[`LoginRepository`](demo/src/main/java/com/google/fhir/examples/demo/LoginRepository.kt)
 is the implementation of `Authenticator` we wrote.
 
 ### Fetching Access Token
@@ -173,10 +173,10 @@ to retrieve an access token.
 <!-- TODO(omarismail): Add diagram showing OAuth Flow -->
 
 After initializing the `FhirApplication` class, the next class launched is the
-[`LoginActivity`](src/main/java/com/google/android/fhir/demo/LoginActivity.kt)
+[`LoginActivity`](demo/src/main/java/com/google/fhir/examples/demo/LoginActivity.kt)
 class, as specified by the intent filters in the `AndroidManifest.xml` file. The
 `LoginActivity` class initializes the
-[`LoginActivityViewModel`](src/main/java/com/google/android/fhir/demo/LoginActivityViewModel.kt)
+[`LoginActivityViewModel`](demo/src/main/java/com/google/fhir/examples/demo/LoginActivityViewModel.kt)
 class; the `LoginActivityViewModel` contains two methods that are called by
 `LoginActivity`: `createIntent` and `handleLoginResponse`. The first method
 returns an
@@ -184,7 +184,7 @@ returns an
 is bound to the Log In button. The intent is built by first fetching the
 [Discovery Document](https://openid.net/specs/openid-connect-discovery-1_0.html)
 from the Proxy. The URL to the Proxy discovery endpoint is loaded from the
-[`auth_config.json`](src/main/res/raw/auth_config.json). When a request to the
+[`auth_config.json`](demo/src/main/res/raw/auth_config.json). When a request to the
 Proxy is made to this endpoint, it returns a response that includes the value of
 `TOKEN_ISSUER`, which is needed to create the login Intent.
 
@@ -202,25 +202,25 @@ the stored JWT, and if expired, refreshes the token.
 ### Download Resources
 
 Once the user logs in, the
-[`MainActivity`](src/main/java/com/google/android/fhir/demo/MainActivity.kt)
+[`MainActivity`](demo/src/main/java/com/google/fhir/examples/demo/MainActivity.kt)
 class is launched, which instantiates the
-[`MainActivityViewModel`](src/main/java/com/google/android/fhir/demo/MainActivityViewModel.kt)
+[`MainActivityViewModel`](demo/src/main/java/com/google/fhir/examples/demo/MainActivityViewModel.kt)
 class. When `MainActivityViewModel` is initialized, it launches an instance of
-[`SyncJob`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/android/fhir/sync/SyncJob.kt).
+[`SyncJob`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/fhir/examples/sync/SyncJob.kt).
 One of the parameters we need to pass in to the `SyncJob.poll` method is an
 implementation of the
-[`FhirSyncWorker`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/android/fhir/sync/FhirSyncWorker.kt)
+[`FhirSyncWorker`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/fhir/examples/sync/FhirSyncWorker.kt)
 abstract class, which we provide via the
-[`FhirPeriodicSyncWorker`](src/main/java/com/google/android/fhir/demo/data/FhirPeriodicSyncWorker.kt)
+[`FhirPeriodicSyncWorker`](demo/src/main/java/com/google/fhir/examples/demo/data/FhirPeriodicSyncWorker.kt)
 class.
 
 `FhirPeriodicSyncWorker` implements two methods, one of which is
 `getDownloadWorkManager`. The implementation of that method requires a
-[`DownloadWorkManager`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/android/fhir/sync/DownloadWorkManager.kt)
+[`DownloadWorkManager`](https://github.com/google/android-fhir/blob/master/engine/src/main/java/com/google/fhir/examples/sync/DownloadWorkManager.kt)
 returned, a class that we also have to implement. We have to provide a way for
 the SDK to generate the FHIR download requests and handle the FHIR responses
 returned, and we do that via the
-[`DownloadWorkManagerImpl`](src/main/java/com/google/android/fhir/demo/data/DownloadWorkManagerImpl.kt)
+[`DownloadWorkManagerImpl`](demo/src/main/java/com/google/fhir/examples/demo/data/DownloadWorkManagerImpl.kt)
 class. This class takes in an initial resource ID to seed the first download
 request; this resource ID comes from the value of the `patient_list` claim that
 is part of the JWT access token now stored on the App.
