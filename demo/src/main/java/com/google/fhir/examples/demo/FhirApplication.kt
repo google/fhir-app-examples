@@ -40,7 +40,7 @@ class FhirApplication : Application() {
         RECREATE_AT_OPEN,
         ServerConfiguration(
           ServerConstants.BASE_URL,
-          LoginRepository.getInstance(applicationContext)
+          authenticator = LoginRepository.getInstance(applicationContext)
         )
       )
     )
