@@ -19,6 +19,7 @@ package com.google.fhir.examples.demo.data
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.auth0.android.jwt.JWT
+import com.google.android.fhir.sync.AcceptLocalConflictResolver
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.FhirSyncWorker
 import com.google.fhir.examples.demo.FhirApplication
@@ -33,6 +34,8 @@ class FhirPeriodicSyncWorker(appContext: Context, workerParams: WorkerParameters
     val patientListId = JWT(accessToken).getClaim("patient_list").asString()
     return DownloadWorkManagerImpl(patientListId!!)
   }
+
+  override fun getConflictResolver() = AcceptLocalConflictResolver
 
   override fun getFhirEngine() = FhirApplication.fhirEngine(applicationContext)
 }
