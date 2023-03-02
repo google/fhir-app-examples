@@ -62,5 +62,5 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
 }
 
 object ServerConstants {
-  const val BASE_URL = "https://hapi.fhir.org/baseR4/"
+  const val BASE_URL = "http://10.0.2.2:8080/"
 }
