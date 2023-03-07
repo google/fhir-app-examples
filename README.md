@@ -1,45 +1,45 @@
 # FHIR App Examples
 
-A repository containing example apps using the
-[Android FHIR SDK](https://github.com/google/android-fhir).
-Currently, the only example is the [`demo`](./demo) app that shows how to
-interact with the
-[FHIR Access Proxy](https://github.com/google/fhir-access-proxy).
+A repository containing example apps using [Open Health
+Stack](https://developers.google.com/open-health-stack) components.
+
+Follow the guide below to see a demo of several components working together.
 
 ## Before you begin
 
-### What you'll build
+### What you'll see
 
-This repository shows an app built using the
-[Android FHIR SDK](https://github.com/google/android-fhir) interacting with the
-[FHIR Access Proxy](https://github.com/google/fhir-access-proxy). The Access
-Proxy provides granular access control in front of any generic FHIR store. The
-job of this proxy is to let authenticated users access only what they are
-authorized to.
+The demo Android app uses the [Android FHIR
+SDK](https://github.com/google/android-fhir) to show a patient registration
+questionnaire and save them locally. It also syncs data with a FHIR server through
+the [FHIR Info Gateway](https://github.com/google/fhir-gateway), which provides
+access control to FHIR resources based on the authenticated user. Finally,
+[FHIR Data Pipes](https://github.com/google/fhir-data-pipes) periodically
+transforms the data to Parquet files that you can query to perform analytics.
+
 
 ### What you'll learn
 
-*   How to integrate the Android FHIR SDK with the FHIR Access Proxy
-*   How the FHIR Access Proxy works
+*   How to integrate the Android FHIR SDK with the FHIR Info Gateway
+*   How the FHIR Info Gateway works
 *   How to implement interfaces for syncing FHIR resources
+*   How to transform and export FHIR data to query with Spark SQL
 
 The diagram below shows the different components that are involved:
 
-[![Setup Overview](https://github.com/google/fhir-access-proxy/blob/main/resources/fhir_access_proxy.png?raw=true "Setup Overview")](https://github.com/google/fhir-access-proxy/blob/main/resources/fhir_access_proxy.png?raw=true)
+[![Setup Overview](https://github.com/google/fhir-gateway/blob/main/doc/summary.png?raw=true "Setup Overview")](https://github.com/google/fhir-gateway/blob/main/doc/summary.png?raw=true)
 
 ### What you'll need
 
 *   Java 8 or higher
-*   Android Studio installed, with an Android Emulator
-    [setup](https://developer.android.com/studio/run/managing-avds) to run the
-    app
+*   [Android Studio](https://developer.android.com/studio) set up with an
+    [Android emulator](https://developer.android.com/studio/run/managing-avds)
 *   [Docker](https://docs.docker.com/get-docker/)
-*   [Docker-Compose](https://docs.docker.com/compose/install/) (must be at least
-    v2)
+*   [Docker-Compose](https://docs.docker.com/compose/install/) v2 or later
 
-## App Setup
+## Demo app setup
 
-1.  Clone the FHIR App Examples Repo:
+1.  Clone the FHIR App Examples repo:
 
     ```shell
     git clone https://github.com/google/fhir-app-examples.git
@@ -50,15 +50,73 @@ The diagram below shows the different components that are involved:
     If this is your first time opening the project, the Gradle Build process
     should start (and take some time).
 
-## IDP, Proxy and HAPI FHIR Server Setup
+## FHIR server and Data Pipes setup
 
-1.  Clone the FHIR Access Proxy Repo:
+1.  Clone the [FHIR Data Pipes repo](https://github.com/google/fhir-data-pipes):
 
     ```shell
-    git clone https://github.com/google/fhir-access-proxy.git
+    git clone https://github.com/google/fhir-data-pipes.git
     ```
 
-2.  Start the Keycloak Identity Provider Server. From the fhir-access-proxy
+2.  Follow the instructions to [set up a local test
+    server](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers).
+    At step 2, follow the instructions for a "HAPI source server with Postgres".
+    You can omit the optional step 4.
+
+    You now have a HAPI FHIR server that you loaded with synthetic patient
+    data; exactly 79 patients, if it only has the test data.
+
+3.  From a terminal, run:
+
+    ```shell
+    PATIENT_ID1=4765
+    PATIENT_ID2=4767
+
+    curl -X PUT -H "Content-Type: application/json" \
+      "http://localhost:8091/fhir/List/patient-list-example" \
+      -d '{
+          "resourceType": "List",
+          "id": "patient-list-example",
+          "status": "current",
+          "mode": "working",
+          "entry": [
+             {
+                "item": {
+                "reference": "Patient/'"${PATIENT_ID1}"'"
+                }
+             },
+             {
+                "item": {
+                "reference": "Patient/'"${PATIENT_ID2}"'"
+                }
+             }
+          ]
+       }'
+    ```
+
+    This creates a [FHIR List](https://www.hl7.org/fhir/list.html) on the
+    server with the id `patient-list-example`, which we will use as an
+    access control list. It contains references to `Patient/4765` and
+    `Patient/4767` which the user is allowed to access.
+
+4.  Follow the instructions to set up a [single-machine analytics
+    pipeline](https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker).
+    This Docker image includes the [FHIR Pipelines
+    Controller](https://github.com/google/fhir-data-pipes/wiki/Try-out-the-FHIR-Pipelines-Controller)
+    plus a Spark Thrift server where data is ultimately loaded for querying.
+
+5.  In a web browser, visit [http://localhost:8090](http://localhost:8090)
+    to see the FHIR Pipelines Controller UI.
+
+## IDP and Info Gateway setup
+
+1.  Clone the FHIR Access Proxy repo:
+
+    ```shell
+    git clone https://github.com/google/fhir-gateway.git
+    ```
+
+2.  Start the Keycloak Identity Provider Server. From the fhir-gateway
     directory, run:
 
     ```shell
@@ -67,41 +125,39 @@ The diagram below shows the different components that are involved:
     ```
 
     The
-    [config-compose.yaml](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/config-compose.yaml)
+    [config-compose.yaml](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/config-compose.yaml)
     sets up a Keycloak instance that can support both a list-based access
     control and a single-patient based SMART-on-FHIR app (in two separate
     realms).
 
     The `keycloak-config` image is built using the Dockerfile
-    [here](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/Dockerfile).
+    [here](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/Dockerfile).
     A key component of the Dockerfile is the
-    [keycloak_setup.sh](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/keycloak_setup.sh).
+    [keycloak_setup.sh](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/keycloak_setup.sh).
     There are two points of interest in this script: the first is
-    [this](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/keycloak_setup.sh#L78-L83),
+    [this](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/keycloak_setup.sh#L78-L83),
     which creates a client that authenticated users can act as, and
-    [here](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/keycloak_setup.sh#L101-L105)
+    [here](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/keycloak_setup.sh#L101-L105)
     where we create a user that binds the `patient-list-example` value to the
     `patient_list` claim field that is part of the JWT access token. The default
-    username and password used for the user are from the env file
-    [here](https://github.com/google/fhir-access-proxy/blob/main/docker/keycloak/.env).
+    username and password used for the user are from the 
+    [env file](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/.env).
 
-3.  Start the FHIR Access Proxy and HAPI FHIR Server (don’t forget the `--wait`
-    flag):
+3.  Start the FHIR Access Proxy. From the fhir-gateway directory, run:
 
     ```shell
-    ALLOWED_QUERIES_FILE="resources/hapi_page_url_allowed_queries.json" \
-    RUN_MODE="DEV"  \
-    docker-compose -f docker/hapi-proxy-compose.yaml \
-                 up --force-recreate --remove-orphans -d --quiet-pull --wait
+    docker run --rm --network host \
+      -e TOKEN_ISSUER="http://localhost:9080/auth/realms/test" \
+      -e PROXY_TO="http://localhost:8091/fhir" \
+      -e BACKEND_TYPE="HAPI" \
+      -e RUN_MODE="DEV" \
+      -e ACCESS_CHECKER=list \
+      -e ALLOWED_QUERIES_FILE="resources/hapi_page_url_allowed_queries.json" \
+      us-docker.pkg.dev/fhir-proxy-build/stable/fhir-gateway:latest
     ```
 
-    The
-    [`hapi-proxy-compose.yaml`](https://github.com/google/fhir-access-proxy/blob/main/docker/hapi-proxy-compose.yaml)
-    configures the FHIR Access Proxy and a
-    [pre-loaded HAPI FHIR Server](https://github.com/google/fhir-access-proxy/tree/main/docker#pre-loaded-hapi-server)
-    with synthetic data, with the default environment variables being set in the
-    [.env](https://github.com/google/fhir-access-proxy/blob/main/docker/.env)
-    file. The `TOKEN_ISSUER` variable is the IP of the Keycloak IDP from the
+    This brings up a FHIR Info Gateway, connected to the HAPI FHIR server.
+    The `TOKEN_ISSUER` variable is the IP of the Keycloak IDP from the
     previous step, and the `PROXY_TO` variable is the IP of the FHIR server. As
     we are running the `TOKEN_ISSUER` and FHIR Access Proxy on the same machine
     (but on different ports), we need to bypass the Proxy's token issuer check
@@ -110,45 +166,104 @@ The diagram below shows the different components that are involved:
     **WARNING**: Never use `RUN_MODE=DEV` in a production environment.
 
     Part of setting up the FHIR Access Proxy is choosing the type of
-    [`AccessChecker`](https://github.com/google/fhir-access-proxy/blob/main/server/src/main/java/com/google/fhir/proxy/interfaces/AccessChecker.java)
-    to use . This is set using the `ACCESS_CHECKER` environment variable (See
-    [here](https://github.com/google/fhir-access-proxy#proxy-setup) for more
+    [Access Checker](https://github.com/google/fhir-gateway/wiki/Understanding-access-checker-plugins)
+    to use. This is set using the `ACCESS_CHECKER` environment variable (See
+    [here](https://github.com/google/fhir-gateway#proxy-setup) for more
     detail). In this demo, we will use the default value of `list`, which will
     use the
-    [`ListAccessChecker`](https://github.com/google/fhir-access-proxy/blob/main/plugins/src/main/java/com/google/fhir/proxy/plugin/ListAccessChecker.java)
+    [`ListAccessChecker`](https://github.com/google/fhir-gateway/wiki/Understanding-access-checker-plugins#explore-the-list-access-checker-plugin)
     to manage incoming requests. This access-checker uses the `patient_list` ID
     in the JWT access token to fetch the "List" of patient IDs that the given
     user has access to. There are some URL requests that we want to bypass the
     access checker (e.g. URLs with `_getpages` in them) and we declare these
     rules in
-    [`hapi_page_url_allowed_queries.json`](https://github.com/google/fhir-access-proxy/blob/main/resources/hapi_page_url_allowed_queries.json).
+    [`hapi_page_url_allowed_queries.json`](https://github.com/google/fhir-gateway/blob/main/resources/hapi_page_url_allowed_queries.json).
     To make the server use this file, we set the environment variable
-    [`ALLOWED_QUERIES_FILE`](https://github.com/google/fhir-access-proxy#proxy-setup).
+    [`ALLOWED_QUERIES_FILE`](https://github.com/google/fhir-gateway#proxy-setup).
 
-## Running the App
+## See the components in action
+
+This example demonstrates several components of Open Health Stack.
+
+### Android FHIR SDK in the demo app
+
+The Demo app uses the [Structured Data Capture
+library](https://developers.google.com/open-health-stack/android-fhir/data-capture) 
+to render the patient registration and survey forms, and to extract FHIR
+resources based on the responses. You can see a form by clicking the **Add
+Patient** button in the bottom-right of the main screen.
+
+The Demo app also uses the (FHIR Engine library)[https://developers.google.com/open-health-stack/android-fhir/fhir-engine]
+to save FHIR resources in the app and sync them with a FHIR server. You can
+see this when resources sync from the server the first time, or when you register
+new patients.
 
 1.  In Android Studio, with an Android Emulator installed, run the `demo` app by
-    pressing on the “Play” button on the top bar
+    pressing on the **Play** button on the top bar. This will build the app and
+    open the emulator.
 
-2.  This will build the app, and open the Emulator
+1.  Once the app finishes building it will launch in the emulator and its logs
+    will be available in the bottom **Run** tab of Android Studio.
 
-3.  When the app successfully launches, the Run logs will be available in the
-    Run tab at the bottom, and the app will have booted on the Emulator
-
-4.  In the Emulator, press the Log In button, which will take you to the IDP
+1.  In the Emulator, press the **Log In** button, which will take you to the IDP
     login screen. Type **testuser** as the username and **testpass** as the
     password.
 
-5.  The app will then start the syncing process. You can see this in the logs
-    displayed in the Run tab
+1.  The app will then start the syncing process. You can see this in the logs
+    displayed in the Run tab.
 
-## How the App Works
+### Info Gateway
+
+When the Demo app syncs resources with the FHIR server, it is actually communicating
+with a [FHIR Info Gateway](https://developers.google.com/open-health-stack/fhir-info-gateway).
+It uses the [List Access Checker](https://github.com/google/fhir-gateway/wiki/Understanding-access-checker-plugins#explore-the-list-access-checker-plugin)
+to determine which Patient resources `testuser` has access to, and then fetches the
+resources from the actual FHIR server when allowed. The demo app is designed to only
+send requests that are expected to succeed, but you can follow the guide to [try out the Info
+Gateway](https://github.com/google/fhir-gateway/wiki/Try-out-FHIR-Information-Gateway)
+for more information.
+
+### FHIR Data Pipes
+
+The FHIR Data Pipes Pipelines Controller facilitates the transformation of data from
+a FHIR server to Parquet files. In this guide, you use the [single machine
+configuration](https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker)
+which also loads the Parquet files into a Spark Thrift server for you.
+
+1.  Visit the Pipeline Controller UI at [http://localhost:8090](http://localhost:8090).
+
+1.  Click on **Run Full** to generate the Parquet files.
+
+1.  Connect to jdbc:hive2://localhost:10001 using a Hive/Spark client.
+
+1.  Count the number of patients:
+    ```sql
+    SELECT COUNT(0) FROM default.patient;
+    ```
+
+1.  From the demo app running in the Android Emulator, register a new patient by selecting
+    the **New Patient** (+) button and complete the registration form.
+
+1.  Force the app to sync with the server by tapping the menu button and selecting **Sync**.
+
+1.  Update the Parquet files by visiting the Pipeline Controller UI and clicking **Run Incremental**.
+
+1.  Query the number of patients again:
+    ```sql
+    SELECT COUNT(0) FROM default.patient;
+    ```
+
+If you have any errors when running the incremental pipeline or it fails to work, try using
+`sudo chmod -R 755` on the Parquet file directory, default located at
+`fhir-data-pipes/tree/master/docker/dwh`. 
+
+## Implementation details
 
 ### Initial Launch
 
 When the app is launched, the first class launched is
-[`FhirApplication`](demo/src/main/java/com/google/fhir/examples/demo/FhirApplication.kt)
-, as it is a subclass of
+[`FhirApplication`](demo/src/main/java/com/google/fhir/examples/demo/FhirApplication.kt),
+as it is a subclass of
 [`Application`](https://developer.android.com/reference/android/app/Application)
 and specified in the `"android:name"` field in
 [`AndroidManifest.xml`](demo/src/main/AndroidManifest.xml). Part of the
