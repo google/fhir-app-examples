@@ -28,7 +28,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.fhir.sync.State
 import com.google.fhir.examples.demo.databinding.ActivityMainBinding
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -120,11 +119,8 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun observeLastSyncTime() {
-    viewModel.lastSyncTimestampLiveData.observe(
-      this,
-      {
-        binding.navigationView.getHeaderView(0).findViewById<TextView>(R.id.last_sync_tv).text = it
-      }
-    )
+    viewModel.lastSyncTimestampLiveData.observe(this) {
+      binding.navigationView.getHeaderView(0).findViewById<TextView>(R.id.last_sync_tv).text = it
+    }
   }
 }

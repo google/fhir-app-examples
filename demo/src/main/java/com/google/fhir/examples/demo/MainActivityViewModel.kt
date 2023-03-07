@@ -21,23 +21,22 @@ import android.text.format.DateFormat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.work.Constraints
 import com.google.android.fhir.sync.PeriodicSyncConfiguration
 import com.google.android.fhir.sync.RepeatInterval
 import com.google.android.fhir.sync.State
 import com.google.android.fhir.sync.Sync
-import com.google.fhir.examples.demo.data.FhirPeriodicSyncWorker
+import com.google.fhir.examples.demo.data.FhirSyncWorker
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /** View model for [MainActivity]. */
-class MainActivityViewModel(application: Application, private val state: SavedStateHandle) :
+class MainActivityViewModel(application: Application) :
   AndroidViewModel(application) {
   private val _lastSyncTimestampLiveData = MutableLiveData<String>()
   val lastSyncTimestampLiveData: LiveData<String>
@@ -53,6 +52,7 @@ class MainActivityViewModel(application: Application, private val state: SavedSt
   }
 
   /** Requests periodic sync. */
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun poll() {
     viewModelScope.launch {
       job.poll(
@@ -60,7 +60,7 @@ class MainActivityViewModel(application: Application, private val state: SavedSt
             syncConstraints = Constraints.Builder().build(),
             repeat = RepeatInterval(interval = 15, timeUnit = TimeUnit.MINUTES)
           ),
-          FhirPeriodicSyncWorker::class.java
+          FhirSyncWorker::class.java
         )
         .collect { _pollState.emit(it) }
     }

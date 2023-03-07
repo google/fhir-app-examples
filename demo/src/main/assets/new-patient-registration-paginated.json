@@ -182,15 +182,6 @@
               "valueCode": "horizontal"
             }
           ],
-          "initial": [
-            {
-              "valueCoding": {
-                "system": "http://hl7.org/fhir/administrative-gender",
-                "code": "female",
-                "display": "Female"
-              }
-            }
-          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -353,15 +344,15 @@
         },
         {
           "extension": [
-          {
-            "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
-            "valueExpression": {
-              "language": "text/fhirpath",
-              "expression": "Patient.active",
-              "name": "patientActive"
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "Patient.active",
+                "name": "patientActive"
+              }
             }
-          }
-        ],
+          ],
           "linkId": "PR-active",
           "definition": "http://hl7.org/fhir/StructureDefinition/Patient#Patient.active",
           "type": "boolean",

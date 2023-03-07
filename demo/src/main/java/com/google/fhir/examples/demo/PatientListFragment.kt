@@ -37,9 +37,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.sync.State
-import com.google.fhir.examples.demo.PatientListViewModel.PatientListViewModelFactory
 import com.google.fhir.examples.demo.databinding.FragmentPatientListBinding
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -56,10 +54,9 @@ class PatientListFragment : Fragment() {
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
-  ): View? {
+  ): View {
     _binding = FragmentPatientListBinding.inflate(inflater, container, false)
-    val view = binding.root
-    return view
+    return binding.root
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -72,7 +69,10 @@ class PatientListFragment : Fragment() {
     patientListViewModel =
       ViewModelProvider(
           this,
-          PatientListViewModelFactory(requireActivity().application, fhirEngine)
+          PatientListViewModel.PatientListViewModelFactory(
+            requireActivity().application,
+            fhirEngine
+          )
         )
         .get(PatientListViewModel::class.java)
     val recyclerView: RecyclerView = binding.patientListContainer.patientList
@@ -84,18 +84,15 @@ class PatientListFragment : Fragment() {
       }
     )
 
-    patientListViewModel.liveSearchedPatients.observe(
-      viewLifecycleOwner,
-      {
-        Timber.d("Submitting ${it.count()} patient records")
-        adapter.submitList(it)
-      }
-    )
+    patientListViewModel.liveSearchedPatients.observe(viewLifecycleOwner) {
+      Timber.d("Submitting ${it.count()} patient records")
+      adapter.submitList(it)
+    }
 
-    patientListViewModel.patientCount.observe(
-      viewLifecycleOwner,
-      { binding.patientListContainer.patientCount.text = "$it Patient(s)" }
-    )
+    patientListViewModel.patientCount.observe(viewLifecycleOwner) {
+      binding.patientListContainer.patientCount.text = "$it Patient(s)"
+    }
+
     searchView = binding.search
     searchView.setOnQueryTextListener(
       object : SearchView.OnQueryTextListener {
@@ -118,8 +115,7 @@ class PatientListFragment : Fragment() {
       }
     }
     requireActivity()
-      .onBackPressedDispatcher
-      .addCallback(
+      .onBackPressedDispatcher.addCallback(
         viewLifecycleOwner,
         object : OnBackPressedCallback(true) {
           override fun handleOnBackPressed() {
