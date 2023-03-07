@@ -110,7 +110,7 @@ The diagram below shows the different components that are involved:
 
 ## IDP and Info Gateway setup
 
-1.  Clone the FHIR Access Proxy repo:
+1.  Clone the FHIR Info Gateway repo:
 
     ```shell
     git clone https://github.com/google/fhir-gateway.git
@@ -143,7 +143,7 @@ The diagram below shows the different components that are involved:
     username and password used for the user are from the 
     [env file](https://github.com/google/fhir-gateway/blob/main/docker/keycloak/.env).
 
-3.  Start the FHIR Access Proxy. From the fhir-gateway directory, run:
+3.  Start the FHIR Info Gateway. From the fhir-gateway directory, run:
 
     ```shell
     docker run --rm --network host \
@@ -159,13 +159,13 @@ The diagram below shows the different components that are involved:
     This brings up a FHIR Info Gateway, connected to the HAPI FHIR server.
     The `TOKEN_ISSUER` variable is the IP of the Keycloak IDP from the
     previous step, and the `PROXY_TO` variable is the IP of the FHIR server. As
-    we are running the `TOKEN_ISSUER` and FHIR Access Proxy on the same machine
+    we are running the `TOKEN_ISSUER` and FHIR Info Gateway on the same machine
     (but on different ports), we need to bypass the Proxy's token issuer check
     by setting the environment variable `RUN_MODE` to `DEV`.
 
     **WARNING**: Never use `RUN_MODE=DEV` in a production environment.
 
-    Part of setting up the FHIR Access Proxy is choosing the type of
+    Part of setting up the FHIR Info Gateway is choosing the type of
     [Access Checker](https://github.com/google/fhir-gateway/wiki/Understanding-access-checker-plugins)
     to use. This is set using the `ACCESS_CHECKER` environment variable (See
     [here](https://github.com/google/fhir-gateway#proxy-setup) for more
