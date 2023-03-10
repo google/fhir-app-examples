@@ -34,6 +34,7 @@ The diagram below shows the different components that are involved:
 *   Java 8 or higher
 *   [Android Studio](https://developer.android.com/studio) set up with an
     [Android emulator](https://developer.android.com/studio/run/managing-avds)
+    and an [SDK at 31 or higher](https://developer.android.com/studio/intro/update#sdk-manager)
 *   [Docker](https://docs.docker.com/get-docker/)
 *   [Docker-Compose](https://docs.docker.com/compose/install/) v2 or later
 
