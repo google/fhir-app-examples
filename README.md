@@ -93,6 +93,9 @@ The diagram below shows the different components that are involved:
           ]
        }'
     ```
+    Note: If you are copy and pasting from OSX, you may need to first paste
+    into a text editor to put all of that in a single line (and removing
+    trailing "\"), before pasting that into shell to run.
 
     This creates a [FHIR List](https://www.hl7.org/fhir/list.html) on the
     server with the id `patient-list-example`, which we will use as an
@@ -193,7 +196,7 @@ to render the patient registration and survey forms, and to extract FHIR
 resources based on the responses. You can see a form by clicking the **Add
 Patient** button in the bottom-right of the main screen.
 
-The Demo app also uses the (FHIR Engine library)[https://developers.google.com/open-health-stack/android-fhir/fhir-engine]
+The Demo app also uses the [FHIR Engine library](https://developers.google.com/open-health-stack/android-fhir/fhir-engine)
 to save FHIR resources in the app and sync them with a FHIR server. You can
 see this when resources sync from the server the first time, or when you register
 new patients.
