@@ -95,7 +95,7 @@ The diagram below shows the different components that are involved:
     ```
     Note: If you are copy and pasting from OSX, you may need to first paste
     into a text editor to put all of that in a single line (and removing
-    trailing "\"), before pasting that into shell to run.
+    trailing "\\"), before pasting that into shell to run.
 
     This creates a [FHIR List](https://www.hl7.org/fhir/list.html) on the
     server with the id `patient-list-example`, which we will use as an
