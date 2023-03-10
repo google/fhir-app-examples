@@ -156,7 +156,7 @@ The diagram below shows the different components that are involved:
       -e RUN_MODE="DEV" \
       -e ACCESS_CHECKER=list \
       -e ALLOWED_QUERIES_FILE="resources/hapi_page_url_allowed_queries.json" \
-      us-docker.pkg.dev/fhir-proxy-build/stable/fhir-gateway:latest
+      us-docker.pkg.dev/fhir-proxy-build/stable/fhir-access-proxy:latest
     ```
 
     This brings up a FHIR Info Gateway, connected to the HAPI FHIR server.
