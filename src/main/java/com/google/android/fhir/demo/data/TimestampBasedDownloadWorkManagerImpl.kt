@@ -17,9 +17,11 @@
 package com.google.android.fhir.demo.data
 
 import com.google.android.fhir.demo.DemoDataStore
+import com.google.android.fhir.demo.care.ConfigurationManager.getCareConfigurationResources
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.Request
 import com.google.android.fhir.sync.SyncDataParams
+import com.google.android.fhir.workflow.CarePlanManager
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -29,20 +31,30 @@ import org.hl7.fhir.exceptions.FHIRException
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.ListResource
 import org.hl7.fhir.r4.model.OperationOutcome
+import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
 
-class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore) :
-  DownloadWorkManager {
+class TimestampBasedDownloadWorkManagerImpl(
+  private val dataStore: DemoDataStore,
+  private val carePlanManager: CarePlanManager
+) : DownloadWorkManager {
   private val resourceTypeList = ResourceType.values().map { it.name }
   private val urls =
     LinkedList(
       listOf(
-        "Patient?address-city=NAIROBI&_sort=_lastUpdated",
-        "Binary?_id=android-fhir-thermometer-image"
+        "Patient",
+        "Organization",
+        "PractitionerRole",
+        "Location",
+        "PlanDefinition",
+        "Questionnaire",
+        "Task",
+        "CarePlan"
       )
     )
+
 
   override suspend fun getNextRequest(): Request? {
     var url = urls.poll() ?: return null
@@ -58,7 +70,7 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
   override suspend fun getSummaryRequestUrls(): Map<ResourceType, String> {
     return urls.associate {
       ResourceType.fromCode(it.substringBefore("?")) to
-        it.plus("&${SyncDataParams.SUMMARY_KEY}=${SyncDataParams.SUMMARY_COUNT_VALUE}")
+        it.plus("?${SyncDataParams.SUMMARY_KEY}=${SyncDataParams.SUMMARY_COUNT_VALUE}")
     }
   }
 
@@ -99,6 +111,13 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
         response.entry
           .map { it.resource }
           .also { extractAndSaveLastUpdateTimestampToFetchFutureUpdates(it) }
+      for (item in response.entry) {
+        if (item.resource is PlanDefinition) {
+          bundleCollection +=
+            carePlanManager.getPlanDefinitionDependentResources(item.resource as PlanDefinition)
+          bundleCollection += getCareConfigurationResources()
+        }
+      }
     }
     return bundleCollection
   }
@@ -136,7 +155,7 @@ private fun affixLastUpdatedTimestamp(url: String, lastUpdated: String): String 
   // Affix lastUpdate to non-$everything queries as per:
   // https://hl7.org/fhir/operation-patient-everything.html
   if (!downloadUrl.contains("\$everything")) {
-    downloadUrl = "$downloadUrl&_lastUpdated=gt$lastUpdated"
+    downloadUrl = "$downloadUrl?_lastUpdated=gt$lastUpdated"
   }
 
   // Do not modify any URL set by a server that specifies the token of the page to return.

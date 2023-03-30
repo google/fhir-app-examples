@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/reference_nav_graph"
-    app:startDestination="@id/patient_list"
+    app:startDestination="@id/home_fragment"
 >
 
   <fragment
@@ -29,25 +29,17 @@
         android:name="com.google.android.fhir.demo.PatientDetailsFragment"
         tools:layout="@layout/patient_detail"
     >
-        <action
+    <action
             android:id="@+id/navigate_to_edit_patient"
             app:destination="@id/editPatientFragment"
         />
-        <action
-            android:id="@+id/action_patient_details_to_screenEncounterFragment"
-            app:destination="@id/screenerEncounterFragment"
+    <action
+            android:id="@+id/action_patient_details_to_tasksViewPagerFragment"
+            app:destination="@id/tasksViewPagerFragment"
         />
     <argument android:name="patient_id" app:argType="string" />
   </fragment>
 
-  <fragment
-        android:id="@+id/screenerEncounterFragment"
-        android:label="Screen Encounter"
-        android:name="com.google.android.fhir.demo.ScreenerFragment"
-        tools:layout="@layout/screener_encounter_fragment"
-    >
-    <argument android:name="patient_id" app:argType="string" />
-  </fragment>
   <fragment
         android:id="@+id/addPatientFragment"
         android:label="@string/add_patient"
@@ -55,13 +47,51 @@
         tools:layout="@layout/add_patient_fragment"
     />
 
-    <fragment
+  <fragment
         android:id="@+id/editPatientFragment"
         android:label="Edit Patient"
         android:name="com.google.android.fhir.demo.EditPatientFragment"
         tools:layout="@layout/add_patient_fragment"
     >
-        <argument android:name="patient_id" app:argType="string" />
-    </fragment>
+    <argument android:name="patient_id" app:argType="string" />
+  </fragment>
+
+  <fragment
+        android:id="@+id/tasksViewPagerFragment"
+        android:name="com.google.android.fhir.demo.screening.TasksViewPagerFragment"
+        android:label="ScreeningsViewPagerFragment"
+        tools:layout="@layout/fragment_tasks_view_pager"
+    >
+    <argument android:name="patient_id" app:argType="string" />
+    <action
+            android:id="@+id/action_patient_details_to_screenEncounterFragment"
+            app:destination="@id/screenerEncounterFragment"
+        />
+  </fragment>
+  <fragment
+        android:id="@+id/screenerEncounterFragment"
+        android:label="Screen Encounter"
+        android:name="com.google.android.fhir.demo.screening.ScreenerFragment"
+        tools:layout="@layout/screener_encounter_fragment"
+    >
+    <argument android:name="patient_id" app:argType="string" />
+    <argument android:name="task_logical_id" app:argType="string" />
+    <argument android:name="questionnaire_string" app:argType="string" />
+  </fragment>
+  <fragment
+        android:id="@+id/home_fragment"
+        android:name="com.google.android.fhir.demo.HomeFragment"
+        android:label="HomeFragment"
+        tools:layout="@layout/fragment_home"
+    >
+    <action
+            android:id="@+id/action_home_fragment_to_addPatientFragment"
+            app:destination="@id/addPatientFragment"
+        />
+    <action
+            android:id="@+id/action_home_fragment_to_patient_list"
+            app:destination="@id/patient_list"
+        />
+  </fragment>
 
 </navigation>
