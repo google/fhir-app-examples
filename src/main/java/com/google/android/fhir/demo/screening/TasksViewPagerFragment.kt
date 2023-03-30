@@ -14,93 +14,99 @@
  * limitations under the License.
  */
 
-package com.google.android.fhir.demo
+package com.google.android.fhir.demo.screening
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.google.android.fhir.FhirEngine
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.google.android.fhir.demo.R
 import com.google.android.fhir.demo.care.CareWorkflowExecutionStatus
 import com.google.android.fhir.demo.care.CareWorkflowExecutionViewModel
-import com.google.android.fhir.demo.databinding.PatientDetailBinding
+import com.google.android.fhir.demo.databinding.FragmentTasksViewPagerBinding
+import com.google.android.fhir.logicalId
+import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-/**
- * A fragment representing a single Patient detail screen. This fragment is contained in a
- * [MainActivity].
- */
-class PatientDetailsFragment : Fragment() {
-  private lateinit var fhirEngine: FhirEngine
-  private lateinit var patientDetailsViewModel: PatientDetailsViewModel
+class TasksViewPagerFragment : Fragment() {
+  private val taskViewPagerViewModel: TaskViewPagerViewModel by viewModels()
   private val careWorkflowExecutionViewModel by activityViewModels<CareWorkflowExecutionViewModel>()
 
-  private val args: PatientDetailsFragmentArgs by navArgs()
-  private var _binding: PatientDetailBinding? = null
+  private val args: TasksViewPagerFragmentArgs by navArgs()
+  private var _binding: FragmentTasksViewPagerBinding? = null
   private val binding
     get() = _binding!!
-  var editMenuItem: MenuItem? = null
   private lateinit var careWorkflowExecutionStatusLayout: LinearLayout
   private lateinit var careWorkflowExecutionStatus: TextView
   private lateinit var careWorkflowExecutionImage: ImageView
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setHasOptionsMenu(true)
-  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
-    _binding = PatientDetailBinding.inflate(inflater, container, false)
+    // Inflate the layout for this fragment
+    _binding = FragmentTasksViewPagerBinding.inflate(inflater, container, false)
     return binding.root
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
-    fhirEngine = FhirApplication.fhirEngine(requireContext())
-    patientDetailsViewModel =
-      ViewModelProvider(
-          this,
-          PatientDetailsViewModelFactory(requireActivity().application, fhirEngine, args.patientId)
-        )
-        .get(PatientDetailsViewModel::class.java)
+    Timber.d("TasksViewPagerFragment called: onViewCreated")
+    val fragmentList =
+      listOf(0, 1).map {
+        ListTasksFragment(this::navigateToQuestionnaireCallback).apply {
+          arguments =
+            bundleOf(
+              ListTasksFragment.PATIENT_ID_KEY to args.patientId,
+              ListTasksFragment.TASK_STATUS to taskViewPagerViewModel.getTaskStatus(it)
+            )
+        }
+      }
     careWorkflowExecutionStatusLayout =
       binding.workflowExecutionStatusContainer.careWorkflowExecutionStatusLayout
     careWorkflowExecutionStatus =
       binding.workflowExecutionStatusContainer.careWorkflowExecutionStatus
     careWorkflowExecutionImage =
       binding.workflowExecutionStatusContainer.careWorkflowExecutionStatusImage
-    val adapter = PatientDetailsRecyclerViewAdapter(::onTaskViewPageClick)
-    binding.recycler.adapter = adapter
-    (requireActivity() as AppCompatActivity).supportActionBar?.apply {
-      title = "Patient Card"
-      setDisplayHomeAsUpEnabled(true)
-    }
-    patientDetailsViewModel.livePatientData.observe(viewLifecycleOwner) {
-      adapter.submitList(it)
-      if (!it.isNullOrEmpty()) {
-        editMenuItem?.isEnabled = true
+    binding.viewPager.adapter =
+      object : FragmentStateAdapter(this) {
+        override fun getItemCount() = fragmentList.size
+        override fun createFragment(position: Int) = fragmentList[position]
+      }
+    binding.viewPager.offscreenPageLimit
+    taskViewPagerViewModel.patientName.observe(viewLifecycleOwner) {
+      (requireActivity() as AppCompatActivity).supportActionBar?.apply {
+        title = it
+        setDisplayHomeAsUpEnabled(true)
       }
     }
-    patientDetailsViewModel.getPatientDetailData()
-    (activity as MainActivity).setDrawerEnabled(false)
+    val tasksTabHeadings = listOf("Tasks", "Completed Tasks")
+    TabLayoutMediator(binding.tasksTabLayout, binding.viewPager) { tab, position ->
+        tab.text = tasksTabHeadings[position]
+      }
+      .attach()
+    taskViewPagerViewModel.livePendingTasksCount.observe(viewLifecycleOwner) {
+      binding.tasksTabLayout.getTabAt(0)?.text = "Tasks ($it)"
+    }
+    taskViewPagerViewModel.liveCompletedTasksCount.observe(viewLifecycleOwner) {
+      binding.tasksTabLayout.getTabAt(1)?.text = "Completed Tasks ($it)"
+    }
+    taskViewPagerViewModel.getTasksCount(args.patientId)
+    taskViewPagerViewModel.getPatientName(args.patientId)
+
     collectWorkflowExecution()
   }
 
@@ -108,8 +114,10 @@ class PatientDetailsFragment : Fragment() {
     lifecycleScope.launch {
       careWorkflowExecutionViewModel.patientFlowForCareWorkflowExecution.collect {
         val status = it.careWorkflowExecutionStatus
-        if (it.patient.id == args.patientId) {
+        if (it.patient.logicalId == args.patientId) {
           updateWorkflowExecutionBar(status)
+          taskViewPagerViewModel.getTasksCount(args.patientId)
+          taskViewPagerViewModel.getPatientName(args.patientId)
         }
       }
     }
@@ -136,37 +144,14 @@ class PatientDetailsFragment : Fragment() {
     }
   }
 
-  private fun onTaskViewPageClick() {
+  private fun navigateToQuestionnaireCallback(taskLogicalId: String, questionnaireString: String) {
     findNavController()
       .navigate(
-        PatientDetailsFragmentDirections.actionPatientDetailsToTasksViewPagerFragment(
-          args.patientId
+        TasksViewPagerFragmentDirections.actionPatientDetailsToScreenEncounterFragment(
+          args.patientId,
+          taskLogicalId,
+          questionnaireString
         )
       )
-  }
-
-  override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-    inflater.inflate(R.menu.details_options_menu, menu)
-    editMenuItem = menu.findItem(R.id.menu_patient_edit)
-  }
-
-  override fun onOptionsItemSelected(item: MenuItem): Boolean {
-    return when (item.itemId) {
-      android.R.id.home -> {
-        NavHostFragment.findNavController(this).navigateUp()
-        true
-      }
-      R.id.menu_patient_edit -> {
-        findNavController()
-          .navigate(PatientDetailsFragmentDirections.navigateToEditPatient(args.patientId))
-        true
-      }
-      else -> super.onOptionsItemSelected(item)
-    }
-  }
-
-  override fun onDestroyView() {
-    super.onDestroyView()
-    _binding = null
   }
 }

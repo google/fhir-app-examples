@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.search.Order
-import com.google.android.fhir.search.Search
 import com.google.android.fhir.search.StringFilterModifier
 import com.google.android.fhir.search.count
 import com.google.android.fhir.search.search
@@ -33,6 +32,7 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.RiskAssessment
+import org.hl7.fhir.r4.model.Task
 
 /**
  * The ViewModel helper class for PatientItemRecyclerViewAdapter, that is responsible for preparing
@@ -40,6 +40,9 @@ import org.hl7.fhir.r4.model.RiskAssessment
  */
 class PatientListViewModel(application: Application, private val fhirEngine: FhirEngine) :
   AndroidViewModel(application) {
+
+  private val taskManager =
+    FhirApplication.taskManager(getApplication<Application>().applicationContext)
 
   val liveSearchedPatients = MutableLiveData<List<PatientItem>>()
   val patientCount = MutableLiveData<Long>()
@@ -82,7 +85,6 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
           }
         )
       }
-      filterCity(this)
     }
   }
 
@@ -99,12 +101,18 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
             }
           )
         }
-        filterCity(this)
         sort(Patient.GIVEN, Order.ASCENDING)
         count = 100
         from = 0
       }
-      .mapIndexed { index, fhirPatient -> fhirPatient.toPatientItem(index + 1) }
+      .mapIndexed { index, fhirPatient ->
+        fhirPatient.toPatientItem(index + 1).apply {
+          pendingTasksCount =
+            taskManager.getTasksCount(resourceId) {
+              filter(Task.STATUS, { value = of(getTaskStatus(0)) })
+            }!!
+        }
+      }
       .let { patients.addAll(it) }
 
     val risks = getRiskAssessments()
@@ -116,19 +124,16 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
     return patients
   }
 
-  private fun filterCity(search: Search) {
-    search.filter(Patient.ADDRESS_CITY, { value = "NAIROBI" })
-  }
-
   private suspend fun getRiskAssessments(): Map<String, RiskAssessment?> {
-    return fhirEngine.search<RiskAssessment> {}.groupBy { it.subject.reference }.mapValues { entry
-      ->
-      entry
-        .value
-        .filter { it.hasOccurrence() }
-        .sortedByDescending { it.occurrenceDateTimeType.value }
-        .firstOrNull()
-    }
+    return fhirEngine
+      .search<RiskAssessment> {}
+      .groupBy { it.subject.reference }
+      .mapValues { entry ->
+        entry.value
+          .filter { it.hasOccurrence() }
+          .sortedByDescending { it.occurrenceDateTimeType.value }
+          .firstOrNull()
+      }
   }
 
   /** The Patient's details for display purposes. */
@@ -144,7 +149,8 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
     val isActive: Boolean,
     val html: String,
     var risk: String? = "",
-    var riskItem: RiskAssessmentItem? = null
+    var riskItem: RiskAssessmentItem? = null,
+    var pendingTasksCount: Int = 0
   ) {
     override fun toString(): String = name
   }
@@ -209,4 +215,16 @@ internal fun Patient.toPatientItem(position: Int): PatientListViewModel.PatientI
     isActive = isActive,
     html = html
   )
+}
+
+/**
+ * Currently only [Task.TaskStatus.COMPLETED] & [Task.TaskStatus.READY] are shown. This logic could
+ * be extended.
+ */
+fun getTaskStatus(position: Int): String {
+  return when (position) {
+    0 -> Task.TaskStatus.READY
+    1 -> Task.TaskStatus.COMPLETED
+    else -> Task.TaskStatus.READY
+  }.toCode()
 }
