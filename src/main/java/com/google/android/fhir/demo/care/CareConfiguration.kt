@@ -215,10 +215,6 @@ object ConfigurationManager {
       for (resourceJson in resourceJsonList) {
         val resource = jsonParser.parseResource(resourceJson.toString()) as Resource
         bundleCollection += resource
-<<<<<<< HEAD
-=======
-        // fhirEngine.create(resource)
->>>>>>> f84b5920 (Changes to support configurable care:)
       }
     }
     return bundleCollection
