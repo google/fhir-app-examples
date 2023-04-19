@@ -35,12 +35,9 @@ import com.google.android.fhir.sync.remote.HttpLogger
 import com.google.android.fhir.workflow.CarePlanManager
 import com.google.android.fhir.workflow.FhirOperator
 import com.google.android.fhir.workflow.TaskManager
-<<<<<<< HEAD
 import com.google.android.fhir.datacapture.XFhirQueryResolver
 import com.google.android.fhir.search.search
 import org.hl7.fhir.r4.model.Patient
-=======
->>>>>>> f84b5920 (Changes to support configurable care:)
 import timber.log.Timber
 
 class FhirApplication : Application(), DataCaptureConfig.Provider {
@@ -67,11 +64,11 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         ServerConfiguration(
           BASE_URL,
           httpLogger =
-            HttpLogger(
-              HttpLogger.Configuration(
-                if (BuildConfig.DEBUG) HttpLogger.Level.BODY else HttpLogger.Level.BASIC
-              )
-            ) { Timber.tag("App-HttpLog").d(it) },
+          HttpLogger(
+            HttpLogger.Configuration(
+              if (BuildConfig.DEBUG) HttpLogger.Level.BODY else HttpLogger.Level.BASIC
+            )
+          ) { Timber.tag("App-HttpLog").d(it) },
           networkConfiguration = NetworkConfiguration(uploadWithGzip = false)
         )
       )
@@ -82,10 +79,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
       DataCaptureConfig().apply {
         urlResolver = ReferenceUrlResolver(this@FhirApplication as Context)
         valueSetResolverExternal = object : ValueSetResolver() {}
-<<<<<<< HEAD
         xFhirQueryResolver = XFhirQueryResolver { fhirEngine.search(it) }
-=======
->>>>>>> f84b5920 (Changes to support configurable care:)
       }
     ValueSetResolver.init(this@FhirApplication)
   }
