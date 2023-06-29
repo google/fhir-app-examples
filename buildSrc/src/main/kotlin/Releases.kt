@@ -19,9 +19,14 @@ import org.gradle.api.publish.maven.MavenPom
 object Releases {
   const val groupId = "com.google.fhir.examples"
 
-  // Demo apps
   object Demo {
     const val applicationId = "com.google.fhir.examples.demo"
+    const val versionCode = 1
+    const val versionName = "1.0"
+  }
+
+  object CloudFunction {
+    const val applicationId = "com.google.fhir.examples.cloudfunction"
     const val versionCode = 1
     const val versionName = "1.0"
   }

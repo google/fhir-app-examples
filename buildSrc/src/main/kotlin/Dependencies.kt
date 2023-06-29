@@ -28,6 +28,11 @@ object Dependencies {
     const val workRuntimeKtx = "androidx.work:work-runtime-ktx:${Versions.Androidx.workRuntimeKtx}"
   }
 
+  object Firebase {
+    const val firebaseBom = "com.google.firebase:firebase-bom:${Versions.Firebase.bom}"
+    const val firebaseUI = "com.firebaseui:firebase-ui-auth:7.2.0"
+  }
+
   object Kotlin {
     const val kotlinCoroutinesAndroid =
       "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.Kotlin.kotlinCoroutinesCore}"
@@ -58,7 +63,6 @@ object Dependencies {
   const val jwtDecode = "com.auth0.android:jwtdecode:${Versions.jwtDecode}"
   const val desugarJdkLibs = "com.android.tools:desugar_jdk_libs:${Versions.desugarJdkLibs}"
   const val http = "com.squareup.okhttp3:okhttp:${Versions.http}"
-  const val kotlinPoet = "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
   const val material = "com.google.android.material:material:${Versions.material}"
   const val timber = "com.jakewharton.timber:timber:${Versions.timber}"
 
@@ -66,29 +70,33 @@ object Dependencies {
 
   object Versions {
     object Androidx {
-      const val activity = "1.2.1"
-      const val appCompat = "1.1.0"
-      const val constraintLayout = "2.1.1"
+      const val activity = "1.7.2"
+      const val appCompat = "1.6.1"
+      const val constraintLayout = "2.1.4"
       const val datastorePref = "1.0.0"
-      const val fragmentKtx = "1.3.1"
-      const val lifecycle = "2.2.0"
-      const val navigation = "2.3.4"
-      const val recyclerView = "1.1.0"
-      const val workRuntimeKtx = "2.7.1"
+      const val fragmentKtx = "1.6.0"
+      const val lifecycle = "2.6.1"
+      const val navigation = "2.6.0"
+      const val recyclerView = "1.3.0"
+      const val workRuntimeKtx = "2.8.1"
+    }
+
+    object Firebase {
+      const val bom = "31.5.0"
     }
 
     object Kotlin {
-      const val kotlinCoroutinesCore = "1.4.2"
-      const val stdlib = "1.6.10"
+      const val kotlinCoroutinesCore = "1.7.2"
+      const val stdlib = "1.8.20"
     }
 
     const val appAuth = "0.11.1"
-    const val desugarJdkLibs = "1.1.5"
-    const val http = "4.9.1"
+    const val desugarJdkLibs = "2.0.3"
+    const val http = "4.11.0"
     const val jwtDecode = "2.0.1"
     const val kotlinPoet = "1.9.0"
-    const val material = "1.6.0"
-    const val retrofit = "2.7.2"
+    const val material = "1.9.0"
+    const val retrofit = "2.9.0"
     const val timber = "5.0.1"
   }
 }

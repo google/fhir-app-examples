@@ -1,1 +1,3 @@
 include(":demo")
+
+include(":cloudfunction")

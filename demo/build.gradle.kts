@@ -6,6 +6,7 @@ plugins {
 }
 
 android {
+  namespace = "com.google.fhir.examples.demo"
   compileSdk = Sdk.compileSdk
   defaultConfig {
     applicationId = Releases.Demo.applicationId
@@ -14,9 +15,6 @@ android {
     versionCode = Releases.Demo.versionCode
     versionName = Releases.Demo.versionName
     testInstrumentationRunner = Dependencies.androidJunitRunner
-    // Required when setting minSdkVersion to 20 or lower
-    // See https://developer.android.com/studio/write/java8-support
-    multiDexEnabled = true
     manifestPlaceholders["appAuthRedirectScheme"] = applicationId!!
   }
   buildTypes {
@@ -30,16 +28,11 @@ android {
     // Flag to enable support for the new language APIs
     // See https://developer.android.com/studio/write/java8-support
     isCoreLibraryDesugaringEnabled = true
-    // Sets Java compatibility to Java 8
-    // See https://developer.android.com/studio/write/java8-support
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
   }
-  packagingOptions {
-    resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt"))
-  }
-  // See https://developer.android.com/studio/write/java8-support
-  kotlinOptions { jvmTarget = JavaVersion.VERSION_1_8.toString() }
+  kotlin { jvmToolchain(11) }
+  packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
 }
 
 dependencies {
@@ -65,6 +58,6 @@ dependencies {
   implementation(Dependencies.timber)
   implementation(Dependencies.appAuth)
   implementation(Dependencies.jwtDecode)
-  implementation("com.google.android.fhir:engine:0.1.0-beta02")
+  implementation("com.google.android.fhir:engine:0.1.0-beta03")
   implementation("com.google.android.fhir:data-capture:1.0.0")
 }

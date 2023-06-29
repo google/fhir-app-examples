@@ -31,7 +31,8 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
   // Only initiate the FhirEngine when used for the first time, not when the app is created.
   private val fhirEngine: FhirEngine by lazy { constructFhirEngine() }
 
-  private var dataCaptureConfig: DataCaptureConfig? = DataCaptureConfig(xFhirQueryResolver = {fhirEngine.search(it) })
+  private var dataCaptureConfig: DataCaptureConfig? =
+    DataCaptureConfig(xFhirQueryResolver = { fhirEngine.search(it) })
 
   override fun onCreate() {
     super.onCreate()

@@ -36,8 +36,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 
 /** View model for [MainActivity]. */
-class MainActivityViewModel(application: Application) :
-  AndroidViewModel(application) {
+class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
   private val _lastSyncTimestampLiveData = MutableLiveData<String>()
   val lastSyncTimestampLiveData: LiveData<String>
     get() = _lastSyncTimestampLiveData
