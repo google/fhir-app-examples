@@ -36,7 +36,9 @@ import com.google.android.fhir.workflow.CarePlanManager
 import com.google.android.fhir.workflow.FhirOperator
 import com.google.android.fhir.workflow.TaskManager
 import com.google.android.fhir.datacapture.XFhirQueryResolver
+import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
+import com.google.android.fhir.workflow.FhirOperatorBuilder
 import org.hl7.fhir.r4.model.Patient
 import timber.log.Timber
 
@@ -44,6 +46,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
   private val BASE_URL = "http://10.0.2.2:8088/fhir/"
   // Only initiate the FhirEngine when used for the first time, not when the app is created.
   private val fhirEngine: FhirEngine by lazy { constructFhirEngine() }
+  private val knowledgeManager: KnowledgeManager by lazy { constructKnowledgeManager() }
   private val fhirOperator: FhirOperator by lazy { constructFhirOperator() }
   private val taskManager: TaskManager by lazy { constructTaskManager() }
   private val carePlanManager: CarePlanManager by lazy { constructCarePlanManager() }
@@ -88,12 +91,19 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
     return FhirEngineProvider.getInstance(this)
   }
 
+  private fun constructKnowledgeManager(): KnowledgeManager {
+    return KnowledgeManager.createInMemory(this)
+  }
   private fun constructFhirOperator(): FhirOperator {
-    return FhirOperator(FhirContext.forR4(), fhirEngine)
+    return FhirOperatorBuilder(this.applicationContext)
+      .withFhirContext(FhirContext.forR4())
+      .withFhirEngine(fhirEngine)
+      .withIgManager(knowledgeManager)
+      .build() // (FhirContext.forR4(), fhirEngine)
   }
 
   private fun constructCarePlanManager(): CarePlanManager {
-    return CarePlanManager(fhirEngine, fhirOperator, taskManager)
+    return CarePlanManager(fhirEngine, knowledgeManager, fhirOperator, taskManager, this)
   }
 
   private fun constructTaskManager(): TaskManager {
