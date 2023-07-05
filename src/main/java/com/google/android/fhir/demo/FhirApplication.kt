@@ -59,7 +59,6 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
     if (BuildConfig.DEBUG) {
       Timber.plant(Timber.DebugTree())
     }
-    Patient.IDENTIFIER
     FhirEngineProvider.init(
       FhirEngineConfiguration(
         enableEncryptionIfSupported = false,
@@ -71,8 +70,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
             HttpLogger.Configuration(
               if (BuildConfig.DEBUG) HttpLogger.Level.BODY else HttpLogger.Level.BASIC
             )
-          ) { Timber.tag("App-HttpLog").d(it) },
-          networkConfiguration = NetworkConfiguration(uploadWithGzip = false)
+          ) { Timber.tag("App-HttpLog").d(it) }
         )
       )
     )
@@ -99,7 +97,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
       .withFhirContext(FhirContext.forR4())
       .withFhirEngine(fhirEngine)
       .withIgManager(knowledgeManager)
-      .build() // (FhirContext.forR4(), fhirEngine)
+      .build()
   }
 
   private fun constructCarePlanManager(): CarePlanManager {
