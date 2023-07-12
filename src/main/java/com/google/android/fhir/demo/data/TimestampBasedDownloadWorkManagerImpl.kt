@@ -21,7 +21,7 @@ import com.google.android.fhir.demo.care.ConfigurationManager.getCareConfigurati
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.Request
 import com.google.android.fhir.sync.SyncDataParams
-import com.google.android.fhir.workflow.CarePlanManager
+import com.google.android.fhir.demo.care.CarePlanManager
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
