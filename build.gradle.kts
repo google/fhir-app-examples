@@ -85,9 +85,10 @@ dependencies {
   implementation(Dependencies.timber)
   implementation(Dependencies.Retrofit.gsonConverter)
 
-  implementation("com.google.android.fhir:data-capture:1.0.0")  {
-      exclude(group = Dependencies.androidFhirGroup, module = Dependencies.androidFhirEngineModule)
-    }
+  implementation("com.google.android.fhir:data-capture:1.0.0")
+  // {
+  //     exclude(group = Dependencies.androidFhirGroup, module = Dependencies.androidFhirEngineModule)
+  //   }
   implementation("com.google.android.fhir:engine:0.1.0-beta03")
   implementation("com.google.android.fhir:knowledge:0.1.0-alpha01")
   // implementation(project(":datacapture")) {

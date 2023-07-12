@@ -27,7 +27,7 @@ import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.datacapture.mapping.ResourceMapper
 import com.google.android.fhir.demo.FhirApplication
 import com.google.android.fhir.demo.care.ConfigurationManager.getServiceRequestConfigMap
-import com.google.android.fhir.workflow.TaskManager
+import com.google.android.fhir.demo.care.TaskManager
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
