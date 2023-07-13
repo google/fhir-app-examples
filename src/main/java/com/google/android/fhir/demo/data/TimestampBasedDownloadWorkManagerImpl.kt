@@ -20,7 +20,6 @@ import com.google.android.fhir.demo.DemoDataStore
 import com.google.android.fhir.demo.care.ConfigurationManager.getCareConfigurationResources
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.Request
-import com.google.android.fhir.sync.SyncDataParams
 import com.google.android.fhir.demo.care.CarePlanManager
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -29,7 +28,7 @@ import java.util.LinkedList
 import java.util.Locale
 import org.hl7.fhir.exceptions.FHIRException
 import org.hl7.fhir.r4.model.Bundle
-import org.hl7.fhir.r4.model.ListResource
+import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.OperationOutcome
 import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Reference
@@ -40,39 +39,75 @@ class TimestampBasedDownloadWorkManagerImpl(
   private val dataStore: DemoDataStore,
   private val carePlanManager: CarePlanManager
 ) : DownloadWorkManager {
-  private val resourceTypeList = ResourceType.values().map { it.name }
+
+  companion object {
+    private val resourceFetchByIdRequestSize = 100
+    private val resourceTypeList = ResourceType.values().map { it.name }
+    private val resourceReferencesDownloadOrderByTypeSequence = listOf(
+      ResourceType.Task,
+      ResourceType.Patient,
+      ResourceType.Encounter,
+      ResourceType.Observation,
+      ResourceType.Condition
+    )
+  }
+
+
+  // The assumption with the following URLs is that the server has the capability to identify the
+  // correct set of Patient that are assigned to the Health Professional using this application.
+  // The expectation is that the server is able to filter the requested resources according to the
+  // role and assignments of a Health Professional.
+  // The server could gather the identity of the Health Professional from the Authorisation tokens.
+  private val resourceReferences = mutableMapOf <ResourceType, Set<String>>()
   private val urls =
     LinkedList(
       listOf(
-        "Patient",
-        "Organization",
-        "PractitionerRole",
-        "Location",
         "PlanDefinition",
-        "Questionnaire",
-        "Task",
-        "CarePlan"
+        "CarePlan",
+        "PractitionerRole"
       )
     )
 
 
   override suspend fun getNextRequest(): Request? {
-    var url = urls.poll() ?: return null
-
-    val resourceTypeToDownload =
-      ResourceType.fromCode(url.findAnyOf(resourceTypeList, ignoreCase = true)!!.second)
-    dataStore.getLasUpdateTimestamp(resourceTypeToDownload)?.let {
-      url = affixLastUpdatedTimestamp(url, it)
-    }
-    return Request.of(url)
-  }
-
-  override suspend fun getSummaryRequestUrls(): Map<ResourceType, String> {
-    return urls.associate {
-      ResourceType.fromCode(it.substringBefore("?")) to
-        it.plus("?${SyncDataParams.SUMMARY_KEY}=${SyncDataParams.SUMMARY_COUNT_VALUE}")
+    var url = urls.poll()
+    return if (url == null) {
+      constructNextRequestFromResourceReferences()
+    } else {
+      val resourceTypeToDownload =
+        ResourceType.fromCode(url.findAnyOf(resourceTypeList, ignoreCase = true)!!.second)
+      dataStore.getLasUpdateTimestamp(resourceTypeToDownload)?.let {
+        url = affixLastUpdatedTimestamp(url, it)
+      }
+      Request.of(url)
     }
   }
+
+  private fun constructNextRequestFromResourceReferences(): Request? {
+    for (resourceType in resourceReferencesDownloadOrderByTypeSequence) {
+      if (resourceReferences.getOrDefault(resourceType, emptySet()).isNotEmpty()) {
+        val resourceIds = resourceReferences[resourceType]!!
+        val toBeRequestedIds = resourceIds.take(resourceFetchByIdRequestSize).toSet()
+        val leftOverIds = resourceIds - toBeRequestedIds
+        resourceReferences[resourceType] = leftOverIds
+        val request = createUrlSearchRequestFromIds(resourceType,"_id" , toBeRequestedIds)
+        if (request != null) {
+          return request
+        }
+      }
+    }
+    return null
+  }
+
+  private fun createUrlSearchRequestFromIds(resourceType: ResourceType, searchField: String, resourceIds: Set<String>): Request? {
+    if (resourceIds.isNotEmpty()) {
+      return Request.of("${resourceType.name}?${searchField}=${resourceIds.joinToString(",")}")
+    } else {
+      return null
+    }
+  }
+
+  override suspend fun getSummaryRequestUrls(): Map<ResourceType, String> = emptyMap()
 
   override suspend fun processResponse(response: Resource): Collection<Resource> {
     // As per FHIR documentation :
@@ -83,17 +118,6 @@ class TimestampBasedDownloadWorkManagerImpl(
       throw FHIRException(response.issueFirstRep.diagnostics)
     }
 
-    // If the resource returned is a List containing Patients, extract Patient references and fetch
-    // all resources related to the patient using the $everything operation.
-    if (response is ListResource) {
-      for (entry in response.entry) {
-        val reference = Reference(entry.item.reference)
-        if (reference.referenceElement.resourceType.equals("Patient")) {
-          val patientUrl = "${entry.item.reference}/\$everything"
-          urls.add(patientUrl)
-        }
-      }
-    }
 
     // If the resource returned is a Bundle, check to see if there is a "next" relation referenced
     // in the Bundle.link component, if so, append the URL referenced to list of URLs to download.
@@ -112,14 +136,42 @@ class TimestampBasedDownloadWorkManagerImpl(
           .map { it.resource }
           .also { extractAndSaveLastUpdateTimestampToFetchFutureUpdates(it) }
       for (item in response.entry) {
-        if (item.resource is PlanDefinition) {
-          bundleCollection +=
-            carePlanManager.getPlanDefinitionDependentResources(item.resource as PlanDefinition)
-          bundleCollection += getCareConfigurationResources()
-        }
+        bundleCollection += processResourceForExtraction(item.resource)
       }
     }
     return bundleCollection
+  }
+
+  private suspend fun processResourceForExtraction(resource: Resource): Collection<Resource> {
+    when (resource) {
+      is PlanDefinition -> extractPlanDefinitionResources(resource)
+      is CarePlan -> extractCarePlanResources(resource)
+    }
+    return emptyList()
+  }
+
+  private suspend fun extractPlanDefinitionResources(planDefinition: PlanDefinition): Collection<Resource> {
+    return carePlanManager.getPlanDefinitionDependentResources(planDefinition) + getCareConfigurationResources()
+  }
+
+  private fun extractCarePlanResources(carePlan: CarePlan): Collection<Resource> {
+    val taskIds = carePlan.activity.map { getResourceIdFromReference(it.reference) }.toSet()
+    addResourceIdsToDownload(ResourceType.Task, taskIds)
+    val patientId = getResourceIdFromReference(carePlan.subject)
+    addResourceIdsToDownload(ResourceType.Patient, setOf(patientId))
+    val encounterSearchUrl = createUrlSearchRequestFromIds()
+    return emptyList()
+  }
+
+  private fun getResourceIdFromReference(reference: Reference): String {
+    val referenceElements = reference.reference.split("/")
+    return referenceElements[1]
+  }
+
+  private fun addResourceIdsToDownload(resourceType: ResourceType, resourceIds: Set<String>) {
+    val existingIds = resourceReferences.getOrDefault(resourceType, emptySet()).toMutableSet()
+    existingIds.addAll(resourceIds)
+    resourceReferences[resourceType] = existingIds
   }
 
   private suspend fun extractAndSaveLastUpdateTimestampToFetchFutureUpdates(
