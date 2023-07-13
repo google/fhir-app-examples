@@ -59,7 +59,7 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
    *
    * @param questionnaireResponse screener encounter questionnaire response
    */
-  fun saveScreenerEncounter(questionnaireResponse: QuestionnaireResponse, patientId: String) {
+  fun saveScreenerEncounter(questionnaireResponse: QuestionnaireResponse, patientId: String, carePlanId: String) {
     viewModelScope.launch {
       val bundle = ResourceMapper.extract(questionnaireResource, questionnaireResponse)
       val subjectReference = Reference("Patient/$patientId")
