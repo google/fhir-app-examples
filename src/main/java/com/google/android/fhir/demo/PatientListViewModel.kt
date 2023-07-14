@@ -113,6 +113,7 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
             }!!
         }
       }
+      .sortedByDescending { it.pendingTasksCount }
       .let { patients.addAll(it) }
 
     val risks = getRiskAssessments()
