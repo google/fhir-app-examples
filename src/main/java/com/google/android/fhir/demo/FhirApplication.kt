@@ -43,7 +43,7 @@ import org.hl7.fhir.r4.model.Patient
 import timber.log.Timber
 
 class FhirApplication : Application(), DataCaptureConfig.Provider {
-  private val BASE_URL = "http://10.0.2.2:8080/fhir/"
+  private val BASE_URL = "http://10.0.2.2:8088/fhir/"
   // Only initiate the FhirEngine when used for the first time, not when the app is created.
   private val fhirEngine: FhirEngine by lazy { constructFhirEngine() }
   private val knowledgeManager: KnowledgeManager by lazy { constructKnowledgeManager() }
