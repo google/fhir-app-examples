@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.hl7.fhir.r4.model.Patient
+import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.Task
 
@@ -103,17 +104,18 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
    * activity context. Also re-triggering of [PlanDefinition].apply is done here by fetching the
    * [Patient] from FhirEngine. Update: Updating tasks could also happen in background!
    */
-  fun updateTaskStatus(
+  fun updateTaskAndCarePlanStatus(
     taskLogicalId: String,
     taskStatus: Task.TaskStatus,
-    updateCarePlan: Boolean
+    encounterReferences: List<Reference>,
+    updateCarePlan: Boolean,
   ) {
     viewModelScope.launch {
       val task = fhirEngine.get(ResourceType.Task, taskLogicalId) as Task
       val taskPatient =
         fhirEngine.get(ResourceType.Patient, task.`for`.reference.substring("Patient/".length))
           as Patient
-      carePlanManager.updateCarePlanActivity(task, taskStatus.toString(), updateCarePlan)
+      carePlanManager.updateCarePlanActivity(task, taskStatus.toString(), encounterReferences, updateCarePlan)
       executeCareWorkflowForPatient(taskPatient)
     }
   }
