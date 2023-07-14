@@ -126,8 +126,8 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
   }
 
   private fun observeResourcesSaveAction() {
-    viewModel.isResourcesSaved.observe(viewLifecycleOwner) {
-      if (!it) {
+    viewModel.screenerState.observe(viewLifecycleOwner) {
+      if (!it.isResourceSaved) {
         Snackbar.make(
             requireActivity().findViewById(android.R.id.content),
             R.string.inputs_missing,
@@ -142,10 +142,11 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
           Snackbar.LENGTH_SHORT
         )
         .show()
-      careWorkflowExecutionViewModel.updateTaskStatus(
+      careWorkflowExecutionViewModel.updateTaskAndCarePlanStatus(
         args.taskLogicalId,
         Task.TaskStatus.COMPLETED,
-        true
+        it.encountersCreated,
+        true,
       )
       NavHostFragment.findNavController(this).navigateUp()
     }

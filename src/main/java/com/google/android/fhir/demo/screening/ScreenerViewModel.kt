@@ -18,6 +18,7 @@ package com.google.android.fhir.demo.screening
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -43,6 +44,11 @@ import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 
+data class ScreenerState(
+  val isResourceSaved: Boolean = false,
+  val encountersCreated: List<Reference> = emptyList()
+)
+
 /** ViewModel for screener questionnaire screen {@link ScreenerEncounterFragment}. */
 class ScreenerViewModel(application: Application, private val state: SavedStateHandle) :
   AndroidViewModel(application) {
@@ -52,24 +58,26 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
       FhirContext.forCached(FhirVersionEnum.R4).newJsonParser().parseResource(questionnaireString)
         as Questionnaire
   private var fhirEngine: FhirEngine = FhirApplication.fhirEngine(application.applicationContext)
-  val isResourcesSaved = MutableLiveData<Boolean>()
+  private val _screenerState = MutableLiveData(ScreenerState())
+  val screenerState: LiveData<ScreenerState>
+    get() = _screenerState
 
   /**
    * Saves screener encounter questionnaire response into the application database.
    *
    * @param questionnaireResponse screener encounter questionnaire response
    */
-  fun saveScreenerEncounter(questionnaireResponse: QuestionnaireResponse, patientId: String, carePlanId: String) {
+  fun saveScreenerEncounter(questionnaireResponse: QuestionnaireResponse, patientId: String) {
     viewModelScope.launch {
       val bundle = ResourceMapper.extract(questionnaireResource, questionnaireResponse)
       val subjectReference = Reference("Patient/$patientId")
       val encounterId = generateUuid()
       if (isRequiredFieldMissing(bundle)) {
-        isResourcesSaved.value = false
+        _screenerState.value = ScreenerState(false, encountersCreated = emptyList())
         return@launch
       }
       saveResources(bundle, subjectReference, encounterId)
-      isResourcesSaved.value = true
+      _screenerState.value = ScreenerState(isResourceSaved = true, encountersCreated = listOf(Reference("Encounter/$encounterId")))
     }
   }
 

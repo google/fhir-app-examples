@@ -29,6 +29,7 @@ import java.util.Locale
 import org.hl7.fhir.exceptions.FHIRException
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CarePlan
+import org.hl7.fhir.r4.model.Encounter
 import org.hl7.fhir.r4.model.OperationOutcome
 import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Reference
@@ -41,33 +42,36 @@ class TimestampBasedDownloadWorkManagerImpl(
 ) : DownloadWorkManager {
 
   companion object {
-    private val resourceFetchByIdRequestSize = 100
+    private const val resourceFetchByIdRequestSize = 100
     private val resourceTypeList = ResourceType.values().map { it.name }
     private val resourceReferencesDownloadOrderByTypeSequence = listOf(
+      //Server should filter all the CarePlan that belong to the patients the Health Professional is assigned to
+      ResourceType.CarePlan,
       ResourceType.Task,
-      ResourceType.Patient,
       ResourceType.Encounter,
       ResourceType.Observation,
       ResourceType.Condition
     )
   }
 
-
   // The assumption with the following URLs is that the server has the capability to identify the
-  // correct set of Patient that are assigned to the Health Professional using this application.
+  // correct set of Patients that are assigned to the Health Professional who is using this application.
   // The expectation is that the server is able to filter the requested resources according to the
   // role and assignments of a Health Professional.
   // The server could gather the identity of the Health Professional from the Authorisation tokens.
-  private val resourceReferences = mutableMapOf <ResourceType, Set<String>>()
+  private val resourceReferences = mutableMapOf <ResourceType, MutableMap<String, Set<String>>>()
+  //These initial set of URLs can be a configuration that is downloadable from the server
   private val urls =
     LinkedList(
       listOf(
+        //Server should filter all the PlanDefinition that need to be executed by this Health Professional
         "PlanDefinition",
-        "CarePlan",
-        "PractitionerRole"
+        //Server should fetch the PractitionerRole corresponding to the health Professional
+        "PractitionerRole",
+        //Server should filter all the patients the Health Professional is assigned to
+        "Patient"
       )
     )
-
 
   override suspend fun getNextRequest(): Request? {
     var url = urls.poll()
@@ -85,14 +89,18 @@ class TimestampBasedDownloadWorkManagerImpl(
 
   private fun constructNextRequestFromResourceReferences(): Request? {
     for (resourceType in resourceReferencesDownloadOrderByTypeSequence) {
-      if (resourceReferences.getOrDefault(resourceType, emptySet()).isNotEmpty()) {
-        val resourceIds = resourceReferences[resourceType]!!
-        val toBeRequestedIds = resourceIds.take(resourceFetchByIdRequestSize).toSet()
-        val leftOverIds = resourceIds - toBeRequestedIds
-        resourceReferences[resourceType] = leftOverIds
-        val request = createUrlSearchRequestFromIds(resourceType,"_id" , toBeRequestedIds)
-        if (request != null) {
-          return request
+      if (resourceReferences.getOrDefault(resourceType, emptyMap()).isNotEmpty()) {
+        val resourceSearchValues = resourceReferences[resourceType]!!
+        resourceSearchValues.entries.forEach { (searchParameter, searchIds) ->
+          if (searchIds.isNotEmpty()) {
+            val toBeRequestedIds = searchIds.take(resourceFetchByIdRequestSize).toSet()
+            val leftOverIds = searchIds - toBeRequestedIds
+            resourceReferences[resourceType]!![searchParameter] = leftOverIds
+            val request = createUrlSearchRequestFromIds(resourceType,searchParameter , toBeRequestedIds)
+            if (request != null) {
+              return request
+            }
+          }
         }
       }
     }
@@ -100,10 +108,10 @@ class TimestampBasedDownloadWorkManagerImpl(
   }
 
   private fun createUrlSearchRequestFromIds(resourceType: ResourceType, searchField: String, resourceIds: Set<String>): Request? {
-    if (resourceIds.isNotEmpty()) {
-      return Request.of("${resourceType.name}?${searchField}=${resourceIds.joinToString(",")}")
+    return if (resourceIds.isNotEmpty()) {
+      Request.of("${resourceType.name}?${searchField}=${resourceIds.joinToString(",")}")
     } else {
-      return null
+      null
     }
   }
 
@@ -139,27 +147,41 @@ class TimestampBasedDownloadWorkManagerImpl(
         bundleCollection += processResourceForExtraction(item.resource)
       }
     }
+    println("Bundle size is "+ bundleCollection.size)
     return bundleCollection
   }
 
   private suspend fun processResourceForExtraction(resource: Resource): Collection<Resource> {
     when (resource) {
-      is PlanDefinition -> extractPlanDefinitionResources(resource)
-      is CarePlan -> extractCarePlanResources(resource)
+      is PlanDefinition -> return extractPlanDefinitionDependentResources(resource)
+      is CarePlan -> return extractCarePlanDependentResources(resource)
+      is Encounter -> return addEncounterRelatedResources(resource)
     }
     return emptyList()
   }
 
-  private suspend fun extractPlanDefinitionResources(planDefinition: PlanDefinition): Collection<Resource> {
+  private suspend fun extractPlanDefinitionDependentResources(planDefinition: PlanDefinition): Collection<Resource> {
+    //get all CarePlans for the relevant Patients that are created as a part of execution of this PlanDefinition
+    if (planDefinition.url != null) {
+      addResourceIdsToSearch(ResourceType.CarePlan, "instantiates-canonical", setOf(planDefinition.url))
+    }
     return carePlanManager.getPlanDefinitionDependentResources(planDefinition) + getCareConfigurationResources()
   }
 
-  private fun extractCarePlanResources(carePlan: CarePlan): Collection<Resource> {
+  private fun extractCarePlanDependentResources(carePlan: CarePlan): Collection<Resource> {
+    //get all the tasks that have been carried out/ need to be carried out as a part of this CarePlan
     val taskIds = carePlan.activity.map { getResourceIdFromReference(it.reference) }.toSet()
-    addResourceIdsToDownload(ResourceType.Task, taskIds)
-    val patientId = getResourceIdFromReference(carePlan.subject)
-    addResourceIdsToDownload(ResourceType.Patient, setOf(patientId))
-    val encounterSearchUrl = createUrlSearchRequestFromIds()
+    addResourceIdsToSearch(ResourceType.Task, "_id", taskIds)
+    //get all the encounters that were created as a result of carrying out tasks of this CarePlan
+    val encounterIds = carePlan.activity.flatMap { it.outcomeReference.map { or -> getResourceIdFromReference(or) } }.toSet()
+    addResourceIdsToSearch(ResourceType.Encounter, "_id", encounterIds)
+    return emptyList()
+  }
+
+  private fun addEncounterRelatedResources(encounter: Encounter): Collection<Resource> {
+    //get all related observations and conditions for these encounters
+    addResourceIdsToSearch(ResourceType.Observation, "encounter", setOf(encounter.idElement.idPart))
+    addResourceIdsToSearch(ResourceType.Condition, "encounter", setOf(encounter.idElement.idPart))
     return emptyList()
   }
 
@@ -168,10 +190,15 @@ class TimestampBasedDownloadWorkManagerImpl(
     return referenceElements[1]
   }
 
-  private fun addResourceIdsToDownload(resourceType: ResourceType, resourceIds: Set<String>) {
-    val existingIds = resourceReferences.getOrDefault(resourceType, emptySet()).toMutableSet()
-    existingIds.addAll(resourceIds)
-    resourceReferences[resourceType] = existingIds
+  private fun addResourceIdsToSearch(resourceType: ResourceType, searchParam: String, resourceIds: Set<String>) {
+    if (resourceIds.isEmpty()) {
+      return
+    }
+    val existingSearchParams = resourceReferences.getOrDefault(resourceType, emptyMap()).toMutableMap()
+    resourceReferences[resourceType] = existingSearchParams
+    val existingSearchIds = existingSearchParams.getOrDefault(searchParam, emptySet()).toMutableSet()
+    existingSearchIds.addAll(resourceIds)
+    resourceReferences[resourceType]!![searchParam] = existingSearchIds
   }
 
   private suspend fun extractAndSaveLastUpdateTimestampToFetchFutureUpdates(
