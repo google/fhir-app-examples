@@ -26,17 +26,17 @@ import com.google.android.fhir.FhirEngineConfiguration
 import com.google.android.fhir.FhirEngineProvider
 import com.google.android.fhir.ServerConfiguration
 import com.google.android.fhir.datacapture.DataCaptureConfig
+import com.google.android.fhir.datacapture.XFhirQueryResolver
+import com.google.android.fhir.demo.care.CarePlanManager
 import com.google.android.fhir.demo.care.ConfigurationManager.getTaskConfigMap
+import com.google.android.fhir.demo.care.TaskManager
 import com.google.android.fhir.demo.data.FhirSyncWorker
 import com.google.android.fhir.demo.external.ValueSetResolver
-import com.google.android.fhir.sync.Sync
-import com.google.android.fhir.sync.remote.HttpLogger
-import com.google.android.fhir.demo.care.CarePlanManager
-import com.google.android.fhir.workflow.FhirOperator
-import com.google.android.fhir.demo.care.TaskManager
-import com.google.android.fhir.datacapture.XFhirQueryResolver
 import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
+import com.google.android.fhir.sync.Sync
+import com.google.android.fhir.sync.remote.HttpLogger
+import com.google.android.fhir.workflow.FhirOperator
 import com.google.android.fhir.workflow.FhirOperatorBuilder
 import timber.log.Timber
 
@@ -64,11 +64,11 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         ServerConfiguration(
           BASE_URL,
           httpLogger =
-          HttpLogger(
-            HttpLogger.Configuration(
-              if (BuildConfig.DEBUG) HttpLogger.Level.BODY else HttpLogger.Level.BASIC
-            )
-          ) { Timber.tag("App-HttpLog").d(it) }
+            HttpLogger(
+              HttpLogger.Configuration(
+                if (BuildConfig.DEBUG) HttpLogger.Level.BODY else HttpLogger.Level.BASIC
+              )
+            ) { Timber.tag("App-HttpLog").d(it) }
         )
       )
     )

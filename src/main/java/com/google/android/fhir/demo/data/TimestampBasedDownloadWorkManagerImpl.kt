@@ -17,10 +17,10 @@
 package com.google.android.fhir.demo.data
 
 import com.google.android.fhir.demo.DemoDataStore
+import com.google.android.fhir.demo.care.CarePlanManager
 import com.google.android.fhir.demo.care.ConfigurationManager.getCareConfigurationResources
 import com.google.android.fhir.sync.DownloadWorkManager
 import com.google.android.fhir.sync.Request
-import com.google.android.fhir.demo.care.CarePlanManager
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -44,31 +44,39 @@ class TimestampBasedDownloadWorkManagerImpl(
   companion object {
     private const val resourceFetchByIdRequestSize = 100
     private val resourceTypeList = ResourceType.values().map { it.name }
-    private val resourceReferencesDownloadOrderByTypeSequence = listOf(
-      //Server should filter all the CarePlan that belong to the patients the Health Professional is assigned to
-      ResourceType.CarePlan,
-      ResourceType.Task,
-      ResourceType.Encounter,
-      ResourceType.Observation,
-      ResourceType.Condition
-    )
+    private val resourceReferencesDownloadOrderByTypeSequence =
+      listOf(
+        // Server should filter all the CarePlan that belong to the patients the Health Professional
+        // is assigned to
+        ResourceType.CarePlan,
+        ResourceType.Task,
+        ResourceType.Encounter,
+        ResourceType.Observation,
+        ResourceType.Condition
+      )
   }
 
   // The assumption with the following URLs is that the server has the capability to identify the
-  // correct set of Patients that are assigned to the Health Professional who is using this application.
+  // correct set of Patients that are assigned to the Health Professional who is using this
+  // application.
   // The expectation is that the server is able to filter the requested resources according to the
   // role and assignments of a Health Professional.
   // The server could gather the identity of the Health Professional from the Authorisation tokens.
-  private val resourceReferences = mutableMapOf <ResourceType, MutableMap<String, Set<String>>>()
-  //These initial set of URLs can be a configuration that is downloadable from the server
+  // This is a map of resource references that need to be downloaded. The map is built by parsing
+  // through the relevant references of already downloaded resources. At a resource type level, the
+  // configuration is to store the relevant search parameter key (like _id, subject) and the
+  // corresponding search parameter values.
+  private val resourceReferences = mutableMapOf<ResourceType, MutableMap<String, Set<String>>>()
+  // These initial set of URLs can be a configuration that is downloadable from the server
   private val urls =
     LinkedList(
       listOf(
-        //Server should filter all the PlanDefinition that need to be executed by this Health Professional
+        // Server should filter all the PlanDefinition that need to be executed by this Health
+        // Professional
         "PlanDefinition",
-        //Server should fetch the PractitionerRole corresponding to the health Professional
+        // Server should fetch the PractitionerRole corresponding to the health Professional
         "PractitionerRole",
-        //Server should filter all the patients the Health Professional is assigned to
+        // Server should filter all the patients the Health Professional is assigned to
         "Patient"
       )
     )
@@ -96,7 +104,8 @@ class TimestampBasedDownloadWorkManagerImpl(
             val toBeRequestedIds = searchIds.take(resourceFetchByIdRequestSize).toSet()
             val leftOverIds = searchIds - toBeRequestedIds
             resourceReferences[resourceType]!![searchParameter] = leftOverIds
-            val request = createUrlSearchRequestFromIds(resourceType,searchParameter , toBeRequestedIds)
+            val request =
+              createUrlSearchRequestFromIds(resourceType, searchParameter, toBeRequestedIds)
             if (request != null) {
               return request
             }
@@ -107,9 +116,13 @@ class TimestampBasedDownloadWorkManagerImpl(
     return null
   }
 
-  private fun createUrlSearchRequestFromIds(resourceType: ResourceType, searchField: String, resourceIds: Set<String>): Request? {
+  private fun createUrlSearchRequestFromIds(
+    resourceType: ResourceType,
+    searchField: String,
+    resourceIds: Set<String>
+  ): Request? {
     return if (resourceIds.isNotEmpty()) {
-      Request.of("${resourceType.name}?${searchField}=${resourceIds.joinToString(",")}")
+      Request.of("${resourceType.name}?$searchField=${resourceIds.joinToString(",")}")
     } else {
       null
     }
@@ -125,7 +138,6 @@ class TimestampBasedDownloadWorkManagerImpl(
     if (response is OperationOutcome) {
       throw FHIRException(response.issueFirstRep.diagnostics)
     }
-
 
     // If the resource returned is a Bundle, check to see if there is a "next" relation referenced
     // in the Bundle.link component, if so, append the URL referenced to list of URLs to download.
@@ -147,7 +159,7 @@ class TimestampBasedDownloadWorkManagerImpl(
         bundleCollection += processResourceForExtraction(item.resource)
       }
     }
-    println("Bundle size is "+ bundleCollection.size)
+    println("Bundle size is " + bundleCollection.size)
     return bundleCollection
   }
 
@@ -160,26 +172,38 @@ class TimestampBasedDownloadWorkManagerImpl(
     return emptyList()
   }
 
-  private suspend fun extractPlanDefinitionDependentResources(planDefinition: PlanDefinition): Collection<Resource> {
-    //get all CarePlans for the relevant Patients that are created as a part of execution of this PlanDefinition
+  private suspend fun extractPlanDefinitionDependentResources(
+    planDefinition: PlanDefinition
+  ): Collection<Resource> {
+    // get all CarePlans for the relevant Patients that are created as a part of execution of this
+    // PlanDefinition
     if (planDefinition.url != null) {
-      addResourceIdsToSearch(ResourceType.CarePlan, "instantiates-canonical", setOf(planDefinition.url))
+      addResourceIdsToSearch(
+        ResourceType.CarePlan,
+        "instantiates-canonical",
+        setOf(planDefinition.url)
+      )
     }
-    return carePlanManager.getPlanDefinitionDependentResources(planDefinition) + getCareConfigurationResources()
+    return carePlanManager.getPlanDefinitionDependentResources(planDefinition) +
+      getCareConfigurationResources()
   }
 
   private fun extractCarePlanDependentResources(carePlan: CarePlan): Collection<Resource> {
-    //get all the tasks that have been carried out/ need to be carried out as a part of this CarePlan
+    // get all the tasks that have been carried out/ need to be carried out as a part of this
+    // CarePlan
     val taskIds = carePlan.activity.map { getResourceIdFromReference(it.reference) }.toSet()
     addResourceIdsToSearch(ResourceType.Task, "_id", taskIds)
-    //get all the encounters that were created as a result of carrying out tasks of this CarePlan
-    val encounterIds = carePlan.activity.flatMap { it.outcomeReference.map { or -> getResourceIdFromReference(or) } }.toSet()
+    // get all the encounters that were created as a result of carrying out tasks of this CarePlan
+    val encounterIds =
+      carePlan.activity
+        .flatMap { it.outcomeReference.map { or -> getResourceIdFromReference(or) } }
+        .toSet()
     addResourceIdsToSearch(ResourceType.Encounter, "_id", encounterIds)
     return emptyList()
   }
 
   private fun addEncounterRelatedResources(encounter: Encounter): Collection<Resource> {
-    //get all related observations and conditions for these encounters
+    // get all related observations and conditions for these encounters
     addResourceIdsToSearch(ResourceType.Observation, "encounter", setOf(encounter.idElement.idPart))
     addResourceIdsToSearch(ResourceType.Condition, "encounter", setOf(encounter.idElement.idPart))
     return emptyList()
@@ -190,13 +214,19 @@ class TimestampBasedDownloadWorkManagerImpl(
     return referenceElements[1]
   }
 
-  private fun addResourceIdsToSearch(resourceType: ResourceType, searchParam: String, resourceIds: Set<String>) {
+  private fun addResourceIdsToSearch(
+    resourceType: ResourceType,
+    searchParam: String,
+    resourceIds: Set<String>
+  ) {
     if (resourceIds.isEmpty()) {
       return
     }
-    val existingSearchParams = resourceReferences.getOrDefault(resourceType, emptyMap()).toMutableMap()
+    val existingSearchParams =
+      resourceReferences.getOrDefault(resourceType, emptyMap()).toMutableMap()
     resourceReferences[resourceType] = existingSearchParams
-    val existingSearchIds = existingSearchParams.getOrDefault(searchParam, emptySet()).toMutableSet()
+    val existingSearchIds =
+      existingSearchParams.getOrDefault(searchParam, emptySet()).toMutableSet()
     existingSearchIds.addAll(resourceIds)
     resourceReferences[resourceType]!![searchParam] = existingSearchIds
   }

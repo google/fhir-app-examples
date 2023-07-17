@@ -60,7 +60,9 @@ class CarePlanManager(
       writeText(jsonParser.encodeResourceToString(resource))
     }
   }
-  suspend fun getPlanDefinitionDependentResources(planDefinition: PlanDefinition): Collection<Resource> {
+  suspend fun getPlanDefinitionDependentResources(
+    planDefinition: PlanDefinition
+  ): Collection<Resource> {
     var bundleCollection: Collection<Resource> = mutableListOf()
 
     addPlanDefinition(IdType(planDefinition.id).idPart)
