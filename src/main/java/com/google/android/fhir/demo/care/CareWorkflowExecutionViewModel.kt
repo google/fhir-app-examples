@@ -115,7 +115,12 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
       val taskPatient =
         fhirEngine.get(ResourceType.Patient, task.`for`.reference.substring("Patient/".length))
           as Patient
-      carePlanManager.updateCarePlanActivity(task, taskStatus.toString(), encounterReferences, updateCarePlan)
+      carePlanManager.updateCarePlanActivity(
+        task,
+        taskStatus.toString(),
+        encounterReferences,
+        updateCarePlan
+      )
       executeCareWorkflowForPatient(taskPatient)
     }
   }

@@ -77,7 +77,11 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
         return@launch
       }
       saveResources(bundle, subjectReference, encounterId)
-      _screenerState.value = ScreenerState(isResourceSaved = true, encountersCreated = listOf(Reference("Encounter/$encounterId")))
+      _screenerState.value =
+        ScreenerState(
+          isResourceSaved = true,
+          encountersCreated = listOf(Reference("Encounter/$encounterId"))
+        )
     }
   }
 
