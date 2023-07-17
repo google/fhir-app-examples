@@ -275,7 +275,7 @@ class CarePlanManager(
     carePlan: CarePlan,
     requestedActivityResource: Resource,
     carePlanActivityStatus: CarePlanActivityStatus,
-    outcomeActivityReferences: List<Reference>
+    outcomeReferences: List<Reference>
   ) {
     if (carePlan.isEmpty) return
     for (activity in carePlan.activity) {
@@ -284,7 +284,7 @@ class CarePlanManager(
         )
       ) {
         activity.detail.status = carePlanActivityStatus
-        activity.outcomeReference = outcomeActivityReferences
+        activity.outcomeReference = outcomeReferences
         fhirEngine.update(carePlan)
         break
       }
@@ -294,7 +294,7 @@ class CarePlanManager(
   suspend fun updateCarePlanActivity(
     requestResource: Resource,
     requestResourceStatus: String,
-    outcomeActivityReferences: List<Reference>,
+    outcomeReferences: List<Reference>,
     updateCarePlan: Boolean = true
   ) {
     val carePlanActivityStatus: CarePlanActivityStatus
@@ -312,7 +312,7 @@ class CarePlanManager(
                 IdType(requestResource.basedOnFirstRep.referenceElement.value).idPart
               ) as CarePlan
             else return
-          updateCarePlanStatus(carePlan, requestResource, carePlanActivityStatus, outcomeActivityReferences)
+          updateCarePlanStatus(carePlan, requestResource, carePlanActivityStatus, outcomeReferences)
         }
       }
       "ServiceRequest" -> TODO("Not supported yet")
