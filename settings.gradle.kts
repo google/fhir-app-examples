@@ -1,3 +1,0 @@
-include(":demo")
-
-include(":cloudfunction")
