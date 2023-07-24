@@ -17,7 +17,6 @@ package com.google.fhir.examples.cloudfunction
 
 import android.app.Application
 import android.content.Context
-import com.google.android.fhir.BuildConfig
 import com.google.android.fhir.DatabaseErrorStrategy.RECREATE_AT_OPEN
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.FhirEngineConfiguration
@@ -39,6 +38,9 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
 
   private val dataStore by lazy { DemoDataStore(this) }
 
+  private val baseUrl =
+    "https://us-central1-PROJECT_ID.cloudfunctions.net/fhir-datastore-proxy/"
+
   override fun onCreate() {
     super.onCreate()
     if (BuildConfig.DEBUG) {
@@ -49,7 +51,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         enableEncryptionIfSupported = true,
         RECREATE_AT_OPEN,
         ServerConfiguration(
-          "https://us-central1-fhir-analytics-test.cloudfunctions.net/fhir-datastore-proxy/",
+          baseUrl,
           httpLogger =
             HttpLogger(
               HttpLogger.Configuration(

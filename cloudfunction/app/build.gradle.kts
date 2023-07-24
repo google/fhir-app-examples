@@ -12,6 +12,7 @@ android {
     applicationId = "com.google.fhir.examples.cloudfunction"
     minSdk = 24
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    buildFeatures.buildConfig = true
   }
   buildTypes {
     release {
