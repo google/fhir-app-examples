@@ -1,62 +1,71 @@
-plugins {
-  id(Plugins.BuildPlugins.application)
-  id(Plugins.BuildPlugins.kotlinAndroid)
-  id(Plugins.BuildPlugins.kotlinKapt)
-  id(Plugins.BuildPlugins.navSafeArgs)
-  id(Plugins.BuildPlugins.googleServices)
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+  dependencies {
+    classpath("com.android.tools.build:gradle:8.0.2")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+    classpath("com.google.gms:google-services:4.3.15")
+    classpath("com.diffplug.spotless:spotless-plugin-gradle:6.6.0")
+    classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.6.0")
+
+    // NOTE: Do not place your application dependencies here; they belong
+    // in the individual module build.gradle.kts files
+  }
 }
 
-android {
-  namespace = "com.google.fhir.examples.cloudfunction"
-  compileSdk = Sdk.compileSdk
-  defaultConfig {
-    applicationId = Releases.CloudFunction.applicationId
-    minSdk = Sdk.minSdk
-    targetSdk = Sdk.targetSdk
-    versionCode = Releases.CloudFunction.versionCode
-    versionName = Releases.CloudFunction.versionName
-    testInstrumentationRunner = Dependencies.androidJunitRunner
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
   }
-  buildTypes {
-    getByName("release") {
-      isMinifyEnabled = false
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+  configureSpotless()
+}
+
+fun Project.configureSpotless() {
+  val ktlintVersion = "0.41.0"
+  val ktlintOptions = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
+  apply(plugin = "com.diffplug.spotless")
+  configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+    ratchetFrom = "origin/main"
+    kotlin {
+      target("**/*.kt")
+      targetExclude("**/build/")
+      targetExclude("**/*_Generated.kt")
+      ktlint(ktlintVersion).userData(ktlintOptions)
+      ktfmt().googleStyle()
+      licenseHeaderFile(
+        "${project.rootProject.projectDir}/license-header.txt",
+        "package|import|class|object|sealed|open|interface|abstract "
+        // It is necessary to tell spotless the top level of a file in order to apply config to it
+        // See: https://github.com/diffplug/spotless/issues/135
+        )
+    }
+    kotlinGradle {
+      target("*.gradle.kts")
+      ktlint(ktlintVersion).userData(ktlintOptions)
+      ktfmt().googleStyle()
+    }
+    format("xml") {
+      target("**/*.xml")
+      targetExclude("**/build/", ".idea/")
+      prettier(mapOf("prettier" to "2.0.5", "@prettier/plugin-xml" to "0.13.0"))
+        .config(mapOf("parser" to "xml", "tabWidth" to 4))
+    }
+    // Creates one off SpotlessApply task for generated files
+    com.diffplug.gradle.spotless.KotlinExtension(this).apply {
+      target("**/*_Generated.kt")
+      ktlint(ktlintVersion).userData(ktlintOptions)
+      ktfmt().googleStyle()
+      licenseHeaderFile(
+        "${project.rootProject.projectDir}/license-header.txt",
+        "package|import|class|object|sealed|open|interface|abstract "
+      )
+      createIndependentApplyTask("spotlessGenerated")
     }
   }
-  buildFeatures { viewBinding = true }
-  compileOptions {
-    // Flag to enable support for the new language APIs
-    // See https://developer.android.com/studio/write/java8-support
-    isCoreLibraryDesugaringEnabled = true
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-  }
-  kotlin { jvmToolchain(11) }
-  packaging { resources.excludes.addAll(listOf("META-INF/ASL-2.0.txt", "META-INF/LGPL-3.0.txt")) }
-}
-
-dependencies {
-  coreLibraryDesugaring(Dependencies.desugarJdkLibs)
-
-  implementation(Dependencies.Androidx.activity)
-  implementation(Dependencies.Androidx.appCompat)
-  implementation(Dependencies.Androidx.constraintLayout)
-  implementation(Dependencies.Androidx.datastorePref)
-  implementation(Dependencies.Androidx.fragmentKtx)
-  implementation(Dependencies.Androidx.recyclerView)
-  implementation(Dependencies.Androidx.workRuntimeKtx)
-  implementation(platform(Dependencies.Firebase.firebaseBom))
-  implementation(Dependencies.Firebase.firebaseUI)
-  implementation(Dependencies.Kotlin.kotlinCoroutinesAndroid)
-  implementation(Dependencies.Kotlin.kotlinCoroutinesCore)
-  implementation(Dependencies.Kotlin.stdlib)
-  implementation(Dependencies.Lifecycle.liveDataKtx)
-  implementation(Dependencies.Lifecycle.runtime)
-  implementation(Dependencies.Lifecycle.viewModelKtx)
-  implementation(Dependencies.Navigation.navFragmentKtx)
-  implementation(Dependencies.Navigation.navUiKtx)
-  implementation(Dependencies.material)
-  implementation(Dependencies.timber)
-  implementation("com.google.android.fhir:engine:0.1.0-beta03")
-  implementation("com.google.android.fhir:data-capture:1.0.0")
 }

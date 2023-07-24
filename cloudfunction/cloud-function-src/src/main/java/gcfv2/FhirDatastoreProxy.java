@@ -47,10 +47,14 @@ public class FhirDatastoreProxy implements HttpFunction {
 
   private static final Logger logger = LoggerFactory.getLogger(FhirDatastoreProxy.class);
 
-
-  private static final String CLOUD_FUNCTIONS_ENDPOINT = "https://ENDPOINT_URL";
-  private static final String GCP_FHIR_STORE_ENDPOINT = "https://healthcare.googleapis.com/v1beta1";
-  private static final String FHIR_STORE_NAME = "projects/PROJECT/locations/us/datasets/DATASET/fhirStores/FHIR_STORE";
+  private static final String CLOUD_FUNCTIONS_ENDPOINT = System.getenv("CLOUD_FUNCTIONS_ENDPOINT");
+  private static final String PROJECT_ID = System.getenv("PROJECT_ID");
+  private static final String DATASET_LOCATION = System.getenv("DATASET_LOCATION");
+  private static final String DATASET_ID = System.getenv("DATASET_ID");
+  private static final String FHIR_STORE_ID = System.getenv("FHIR_STORE_ID");
+  private static final String FHIR_STORE_NAME = String.format(
+      "https://healthcare.googleapis.com/v1beta1/projects/%s/locations/%s/datasets/%s/fhirStores/%s",
+      PROJECT_ID, DATASET_LOCATION, DATASET_ID, FHIR_STORE_ID);
 
   public void service(final HttpRequest request, final HttpResponse response) throws Exception {
 
@@ -68,8 +72,7 @@ public class FhirDatastoreProxy implements HttpFunction {
       BufferedWriter writer) {
     try {
       HttpClient httpClient = HttpClients.createDefault();
-      String fhirStoreUrl = String.format("%s/%s/fhir%s", GCP_FHIR_STORE_ENDPOINT, FHIR_STORE_NAME,
-          resourceType);
+      String fhirStoreUrl = String.format("%s/fhir%s",  FHIR_STORE_NAME, resourceType);
       URIBuilder uriBuilder = new URIBuilder(fhirStoreUrl);
 
       for (String paramName : searchParams.keySet()) {
@@ -94,7 +97,7 @@ public class FhirDatastoreProxy implements HttpFunction {
   private void fhirResourcePost(String body, BufferedWriter writer) {
     try {
       HttpClient httpClient = HttpClients.createDefault();
-      String fhirStoreUrl = String.format("%s/%s/fhir", GCP_FHIR_STORE_ENDPOINT, FHIR_STORE_NAME);
+      String fhirStoreUrl = String.format("%s/fhir", FHIR_STORE_NAME);
 
       HttpUriRequest postRequest = RequestBuilder
           .post()
@@ -138,7 +141,7 @@ public class FhirDatastoreProxy implements HttpFunction {
     // proper URL parsing if we need to address edge cases in URL no-op changes. This string
     // matching can be done more efficiently if needed, but we should avoid loading the full
     // stream in memory.
-    String fhirStoreUrl = String.format("%s/%s/fhir", GCP_FHIR_STORE_ENDPOINT, FHIR_STORE_NAME);
+    String fhirStoreUrl = String.format("%s/fhir", FHIR_STORE_NAME);
     int numMatched = 0;
     int n;
     while ((n = entityContentReader.read()) >= 0) {
