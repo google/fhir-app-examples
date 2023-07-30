@@ -7,5 +7,5 @@ Stack](https://developers.google.com/open-health-stack) components.
 
 Below are the list of apps in the repository:
 
-* [demo](./demo): A demo app that integrates Android FHIR SDK with FHIR Info Gateway
-* [cloud-function](./cloud-function)
+* [demo](./demo): A demo app that integrates Android FHIR SDK with FHIR Info Gateway.
+* [cloud-function](./cloud-function).
