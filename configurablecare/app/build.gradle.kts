@@ -29,14 +29,17 @@ android {
     targetCompatibility = JavaVersion.VERSION_11
   }
   kotlin { jvmToolchain(11) }
-  packaging { resources.excludes.addAll(listOf(
-    "META-INF/ASL-2.0.txt",
-    "META-INF/LGPL-3.0.txt",
-    "META-INF/LICENSE.md",
-    "META-INF/NOTICE.md",
-    "META-INF/sun-jaxb.episode",
-    "META-INF/DEPENDENCIES"
-  ))
+  packaging {
+    resources.excludes.addAll(
+      listOf(
+        "META-INF/ASL-2.0.txt",
+        "META-INF/LGPL-3.0.txt",
+        "META-INF/LICENSE.md",
+        "META-INF/NOTICE.md",
+        "META-INF/sun-jaxb.episode",
+        "META-INF/DEPENDENCIES"
+      )
+    )
   }
 }
 
@@ -93,21 +96,17 @@ object HapiFhir {
   const val validation = "ca.uhn.hapi.fhir:hapi-fhir-validation:${Versions.hapiFhir}"
   const val validationDstu3 =
     "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-dstu3:${Versions.hapiFhir}"
-  const val validationR4 =
-    "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4:${Versions.hapiFhir}"
-  const val validationR5 =
-    "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r5:${Versions.hapiFhir}"
+  const val validationR4 = "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4:${Versions.hapiFhir}"
+  const val validationR5 = "ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r5:${Versions.hapiFhir}"
 
   const val fhirCoreDstu2 = "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${Versions.hapiFhirCore}"
-  const val fhirCoreDstu2016 =
-    "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${Versions.hapiFhirCore}"
+  const val fhirCoreDstu2016 = "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${Versions.hapiFhirCore}"
   const val fhirCoreDstu3 = "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:${Versions.hapiFhirCore}"
   const val fhirCoreR4 = "ca.uhn.hapi.fhir:org.hl7.fhir.r4:${Versions.hapiFhirCore}"
   const val fhirCoreR4b = "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:${Versions.hapiFhirCore}"
   const val fhirCoreR5 = "ca.uhn.hapi.fhir:org.hl7.fhir.r5:${Versions.hapiFhirCore}"
   const val fhirCoreUtils = "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:${Versions.hapiFhirCore}"
-  const val fhirCoreConvertors =
-    "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${Versions.hapiFhirCore}"
+  const val fhirCoreConvertors = "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${Versions.hapiFhirCore}"
 
   // Runtime dependency that is required to run FhirPath (also requires minSDK of 26).
   // Version 3.0 uses java.lang.System.Logger, which is not available on Android
