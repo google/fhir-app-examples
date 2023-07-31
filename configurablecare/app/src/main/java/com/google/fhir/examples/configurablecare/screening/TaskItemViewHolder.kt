@@ -38,7 +38,9 @@ class TaskItemViewHolder(binding: ItemTaskViewBinding) : RecyclerView.ViewHolder
     this.taskIcon.setImageResource(
       if (taskItem.status == "ready") R.drawable.ic_task else R.drawable.ic_task_check
     )
-    this.itemView.setOnClickListener { onItemClicked(taskItem) }
+    if (taskItem.clickable) {
+      this.itemView.setOnClickListener { onItemClicked(taskItem) }
+    }
   }
 
   private fun getDate(date: String): String {

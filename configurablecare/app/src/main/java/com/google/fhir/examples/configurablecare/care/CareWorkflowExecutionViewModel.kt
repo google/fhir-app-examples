@@ -29,11 +29,7 @@ import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.Task
 
-/**
- * TODO(mjajoo@): Move this implementation to background in CarePlanManager(?) using
- * BlockingQueue(?) and WorkManager. Earlier I thought that PlanDefinition should be running while
- * the application is active which is not true.
- */
+/** TODO(mjajoo@): Explore if applying PlanDefinition could be done in background. */
 class CareWorkflowExecutionViewModel(application: Application) : AndroidViewModel(application) {
   private val fhirEngine =
     FhirApplication.fhirEngine(getApplication<Application>().applicationContext)
@@ -57,8 +53,7 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
     /**
      * [patientFlowForCareWorkflowExecution] collects each patient in a coroutine and executes
      * workflow blocking. This can be invoked when there is an operation on a Patient or some Task
-     * is updated. TODO(mjajoo@): Add configuration to support for WHICH EVENTS this should be
-     * invoked.
+     * is updated.
      */
     viewModelScope.launch(Dispatchers.IO) {
       patientFlowForCareWorkflowExecution.collect { careWorkflowExecutionRequest ->

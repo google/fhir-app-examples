@@ -67,7 +67,8 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
     val intent: String,
     val dueDate: String,
     val completedDate: String,
-    val owner: String
+    val owner: String,
+    val clickable: Boolean
   ) {
     override fun toString() = description
   }
@@ -84,6 +85,7 @@ internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
     else "Sample End Date"
   val completedDate = if (hasLastModified()) lastModified.toString() else dueDate
   val owner = if (owner.hasDisplay()) owner.display else owner.reference
+  val clickable = focus.reference.contains("Questionnaire")
 
   return ListScreeningsViewModel.TaskItem(
     id = position.toString(),
@@ -93,6 +95,7 @@ internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
     intent = taskIntent,
     dueDate = dueDate,
     completedDate = completedDate,
-    owner = owner
+    owner = owner,
+    clickable = clickable
   )
 }
