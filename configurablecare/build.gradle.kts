@@ -21,7 +21,6 @@ allprojects {
   repositories {
     google()
     mavenCentral()
-    maven(url = uri("${project.rootDir}/dependencies"))
     gradlePluginPortal()
   }
   configureSpotless()
