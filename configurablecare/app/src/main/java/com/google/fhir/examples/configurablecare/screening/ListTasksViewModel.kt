@@ -26,6 +26,7 @@ import com.google.fhir.examples.configurablecare.FhirApplication
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.hl7.fhir.r4.model.Task
+import org.hl7.fhir.r4.model.Task.TaskStatus
 
 class ListScreeningsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -85,7 +86,8 @@ internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
     else "Sample End Date"
   val completedDate = if (hasLastModified()) lastModified.toString() else dueDate
   val owner = if (owner.hasDisplay()) owner.display else owner.reference
-  val clickable = focus.reference.contains("Questionnaire")
+  val clickable =
+    focus.reference.contains("Questionnaire") && taskStatus != TaskStatus.COMPLETED.name
 
   return ListScreeningsViewModel.TaskItem(
     id = position.toString(),
