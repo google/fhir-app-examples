@@ -10,7 +10,7 @@
   <fragment
         android:id="@+id/patient_list"
         android:label="Patient List"
-        android:name="com.google.android.fhir.demo.PatientListFragment"
+        android:name="com.google.fhir.examples.configurablecare.PatientListFragment"
         tools:layout="@layout/patient_list_view"
     >
     <action
@@ -26,7 +26,7 @@
   <fragment
         android:id="@+id/patient_details"
         android:label="Patient Details"
-        android:name="com.google.android.fhir.demo.PatientDetailsFragment"
+        android:name="com.google.fhir.examples.configurablecare.PatientDetailsFragment"
         tools:layout="@layout/patient_detail"
     >
     <action
@@ -43,14 +43,14 @@
   <fragment
         android:id="@+id/addPatientFragment"
         android:label="@string/add_patient"
-        android:name="com.google.android.fhir.demo.AddPatientFragment"
+        android:name="com.google.fhir.examples.configurablecare.AddPatientFragment"
         tools:layout="@layout/add_patient_fragment"
     />
 
   <fragment
         android:id="@+id/editPatientFragment"
         android:label="Edit Patient"
-        android:name="com.google.android.fhir.demo.EditPatientFragment"
+        android:name="com.google.fhir.examples.configurablecare.EditPatientFragment"
         tools:layout="@layout/add_patient_fragment"
     >
     <argument android:name="patient_id" app:argType="string" />
@@ -58,7 +58,7 @@
 
   <fragment
         android:id="@+id/tasksViewPagerFragment"
-        android:name="com.google.android.fhir.demo.screening.TasksViewPagerFragment"
+        android:name="com.google.fhir.examples.configurablecare.screening.TasksViewPagerFragment"
         android:label="ScreeningsViewPagerFragment"
         tools:layout="@layout/fragment_tasks_view_pager"
     >
@@ -71,7 +71,7 @@
   <fragment
         android:id="@+id/screenerEncounterFragment"
         android:label="Screen Encounter"
-        android:name="com.google.android.fhir.demo.screening.ScreenerFragment"
+        android:name="com.google.fhir.examples.configurablecare.screening.ScreenerFragment"
         tools:layout="@layout/screener_encounter_fragment"
     >
     <argument android:name="patient_id" app:argType="string" />
@@ -80,7 +80,7 @@
   </fragment>
   <fragment
         android:id="@+id/home_fragment"
-        android:name="com.google.android.fhir.demo.HomeFragment"
+        android:name="com.google.fhir.examples.configurablecare.HomeFragment"
         android:label="HomeFragment"
         tools:layout="@layout/fragment_home"
     >

@@ -14,13 +14,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.android.fhir.demo"
->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:name="com.google.android.fhir.demo.FhirApplication"
+        android:name="com.google.fhir.examples.configurablecare.FhirApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_fire_engine"
         android:label="@string/app_name"
@@ -30,8 +27,7 @@
         android:theme="@style/AppTheme"
     >
         <activity
-            android:name="com.google.android.fhir.demo.MainActivity"
-            android:label="@string/app_name"
+            android:name="com.google.fhir.examples.configurablecare.MainActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
