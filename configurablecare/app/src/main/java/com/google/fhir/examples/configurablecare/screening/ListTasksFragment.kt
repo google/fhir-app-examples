@@ -94,6 +94,6 @@ class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, St
 
   companion object {
     const val PATIENT_ID_KEY = "patient_id"
-    const val TASK_STATUS = "tab_position"
+    const val TASK_STATUS = "task_status"
   }
 }

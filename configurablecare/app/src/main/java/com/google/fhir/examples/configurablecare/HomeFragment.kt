@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.google.fhir.examples.configurablecare.care.CareConfiguration
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
 import com.google.fhir.examples.configurablecare.care.ConfigurationManager
 import com.google.fhir.examples.configurablecare.care.ConfigurationManager.setServiceRequestConfigMap
@@ -33,7 +34,7 @@ import com.google.fhir.examples.configurablecare.care.ConfigurationManager.setTa
 import com.google.fhir.examples.configurablecare.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {
-  private val configurationManager = ConfigurationManager.getCareConfiguration()
+  private lateinit var careConfiguration: CareConfiguration
   private val workflowExecutionViewModel by activityViewModels<CareWorkflowExecutionViewModel>()
   private var _binding: FragmentHomeBinding? = null
   private val binding
@@ -45,6 +46,7 @@ class HomeFragment : Fragment() {
     savedInstanceState: Bundle?
   ): View {
     _binding = FragmentHomeBinding.inflate(inflater, container, false)
+    careConfiguration = ConfigurationManager.getCareConfiguration(requireContext())
     return binding.root
   }
 
@@ -64,7 +66,7 @@ class HomeFragment : Fragment() {
     val igSpinner = binding.igSpinner
     val adapter =
       ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_dropdown_item)
-    configurationManager.supportedImplementationGuides.forEach {
+    careConfiguration.supportedImplementationGuides.forEach {
       adapter.add(it.implementationGuideConfig.entryPoint.substring("PlanDefinition/".length))
     }
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)

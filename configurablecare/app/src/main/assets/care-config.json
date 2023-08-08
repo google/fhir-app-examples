@@ -1,0 +1,143 @@
+{
+  "supportedImplementationGuides": [
+    {
+      "location": "http://hostname/fhir/ImplementationGuide/NCDIG",
+      "carePlanPolicy": "ACCEPT_ALL",
+      "implementationGuideConfig": {
+        "implementationGuideId": "ImplementationGuide/NCDIG",
+        "entryPoint": "PlanDefinition/NCD-Master-Plan-Definition",
+        "requestResourceConfigurations": [
+          {
+            "resourceType": "Task",
+            "values": [
+              {
+                "field": "owner",
+                "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
+              }
+            ],
+            "maxDuration": "1",
+            "unit": "years"
+          },
+          {
+            "resourceType": "ServiceRequest",
+            "values": [
+              {
+                "field": "requester",
+                "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
+              }
+            ],
+            "maxDuration": "6",
+            "unit": "months"
+          }
+        ],
+        "supportedValueSets": [
+          {
+            "resourceType": "ValueSet",
+            "id": "ncd-facilities-valueset",
+            "url": "http://localhost/ncd-facilities",
+            "status": "draft",
+            "description": "List of Facilities",
+            "expansion": {
+              "contains": [
+                {
+                  "display": "Facility 1"
+                },
+                {
+                  "display": "Facility 2"
+                },
+                {
+                  "display": "Facility 3"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "location": "http://hostname/fhir/ImplementationGuide/CBACIG",
+      "carePlanPolicy": "ACCEPT_ALL",
+      "implementationGuideConfig": {
+        "implementationGuideId": "ImplementationGuide/CBACIG",
+        "entryPoint": "PlanDefinition/CBAC-Master-Plan-Definition",
+        "requestResourceConfigurations": [
+          {
+            "resourceType": "Task",
+            "values": [
+              {
+                "field": "owner",
+                "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
+              },
+              {
+                "field": "requester",
+                "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
+              }
+            ],
+            "maxDuration": "6",
+            "unit": "months"
+          },
+          {
+            "resourceType": "ServiceRequest",
+            "values": [
+              {
+                "field": "requester",
+                "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
+              }
+            ],
+            "maxDuration": "6",
+            "unit": "months"
+          }
+        ],
+        "supportedValueSets": [
+          {
+            "resourceType": "ValueSet",
+            "id": "facilities-valueset",
+            "url": "http://localhost/facilities",
+            "status": "draft",
+            "description": "List of Facilities",
+            "expansion": {
+              "contains": [
+                {
+                  "system": "http://localhost/facilities",
+                  "value": "Location/81417c6a-a6ab-453c-a26b-c08791161300",
+                  "display": "Arendelle PHC"
+                },
+                {
+                  "system": "http://localhost/facilities",
+                  "value": "Location/81417c6a-a6ab-453c-a26b-c08791161200",
+                  "display": "Townsville PHC"
+                },
+                {
+                  "system": "http://localhost/facilities",
+                  "value": "Location/81417c6a-a6ab-453c-a26b-c08791161044",
+                  "display": "Pleasantville PHC"
+                }
+              ]
+            }
+          },
+          {
+            "resourceType": "ValueSet",
+            "id": "assignees-valueset",
+            "url": "http://localhost/assignees",
+            "status": "draft",
+            "description": "List of Assignees",
+            "expansion": {
+              "contains": [
+                {
+                  "system": "http://localhost/assignees",
+                  "code": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045",
+                  "display": "Community Health Worker"
+                },
+                {
+                  "system": "http://localhost/assignees",
+                  "code": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161400",
+                  "display": "Auxiliary Nurse and Midwife"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

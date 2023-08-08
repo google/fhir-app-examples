@@ -152,9 +152,6 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
   }
 
   companion object {
-    const val EXTRA_QUESTIONNAIRE_JSON_STRING = "questionnaire-json-string"
     const val QUESTIONNAIRE_FRAGMENT_TAG = "questionnaire-fragment-tag"
-    const val CURRENT_TASK_ID = "CURRENT_TASK_ID"
-    const val MODIFIED_TASK_ID = "MODIFIED_TASK_ID"
   }
 }

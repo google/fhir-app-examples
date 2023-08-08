@@ -156,14 +156,6 @@ class PatientOverviewItemViewHolder(
     binding.pendingTasksView.setOnClickListener { onTasksViewPageClick() }
     binding.pendingTasksView.text
     (data as PatientDetailOverview).let { binding.title.text = it.patient.name }
-    data.patient.riskItem?.let {
-      binding.patientContainer.setBackgroundColor(it.patientCardColor)
-      binding.statusValue.text = it.riskStatus
-      binding.statusValue.setTextColor(Color.BLACK)
-      binding.statusValue.background =
-        allCornersRounded().apply { fillColor = ColorStateList.valueOf(it.riskStatusColor) }
-      binding.lastContactValue.text = it.lastContacted
-    }
   }
 }
 

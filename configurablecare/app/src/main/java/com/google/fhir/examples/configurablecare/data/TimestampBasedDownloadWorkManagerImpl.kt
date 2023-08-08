@@ -83,7 +83,7 @@ class TimestampBasedDownloadWorkManagerImpl(
     } else {
       val resourceTypeToDownload =
         ResourceType.fromCode(url.findAnyOf(resourceTypeList, ignoreCase = true)!!.second)
-      dataStore.getLasUpdateTimestamp(resourceTypeToDownload)?.let {
+      dataStore.getLastUpdateTimestamp(resourceTypeToDownload)?.let {
         url = affixLastUpdatedTimestamp(url, it)
       }
       Request.of(url)

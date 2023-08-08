@@ -19,7 +19,6 @@ import android.app.Application
 import android.content.res.Resources
 import android.icu.text.DateFormat
 import android.os.Build
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -35,13 +34,9 @@ import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
-import org.apache.commons.lang3.StringUtils
 import org.hl7.fhir.r4.model.Condition
 import org.hl7.fhir.r4.model.Observation
 import org.hl7.fhir.r4.model.Patient
-import org.hl7.fhir.r4.model.ResourceType
-import org.hl7.fhir.r4.model.RiskAssessment
-import org.hl7.fhir.r4.model.codesystems.RiskProbability
 
 /**
  * The ViewModel helper class for PatientItemRecyclerViewAdapter, that is responsible for preparing
@@ -87,8 +82,6 @@ class PatientDetailsViewModel(
   private suspend fun getPatientDetailDataModel(): List<PatientDetailData> {
     val data = mutableListOf<PatientDetailData>()
     val patient = getPatient()
-    patient.riskItem = getPatientRiskAssessment()
-
     val observations = getPatientObservations()
     val conditions = getPatientConditions()
 
@@ -162,71 +155,6 @@ class PatientDetailsViewModel(
   private fun isAndroidIcuSupported() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
 
   private fun getString(resId: Int) = getApplication<Application>().resources.getString(resId)
-
-  private suspend fun getPatientRiskAssessment(): RiskAssessmentItem {
-    val riskAssessment =
-      fhirEngine
-        .search<RiskAssessment> { filter(RiskAssessment.SUBJECT, { value = "Patient/$patientId" }) }
-        .filter { it.hasOccurrence() }
-        .sortedByDescending { it.occurrenceDateTimeType.value }
-        .firstOrNull()
-    val patient = fhirEngine.get(ResourceType.Patient, patientId)
-    return RiskAssessmentItem(
-      getRiskAssessmentStatusColor(riskAssessment),
-      getRiskAssessmentStatus(riskAssessment),
-      if (patient.hasMeta() && patient.meta.hasLastUpdated()) patient.meta.lastUpdated.toString()
-      else "",
-      getPatientDetailsCardColor(riskAssessment)
-    )
-  }
-
-  private fun getRiskAssessmentStatusColor(riskAssessment: RiskAssessment?): Int {
-    riskAssessment?.let {
-      return when (it.prediction.first().qualitativeRisk.coding.first().code) {
-        RiskProbability.LOW.toCode() -> ContextCompat.getColor(getApplication(), R.color.low_risk)
-        RiskProbability.MODERATE.toCode() ->
-          ContextCompat.getColor(getApplication(), R.color.moderate_risk)
-        RiskProbability.HIGH.toCode() -> ContextCompat.getColor(getApplication(), R.color.high_risk)
-        else -> ContextCompat.getColor(getApplication(), R.color.unknown_risk)
-      }
-    }
-    return ContextCompat.getColor(getApplication(), R.color.unknown_risk)
-  }
-
-  private fun getPatientDetailsCardColor(riskAssessment: RiskAssessment?): Int {
-    riskAssessment?.let {
-      return when (it.prediction.first().qualitativeRisk.coding.first().code) {
-        RiskProbability.LOW.toCode() ->
-          ContextCompat.getColor(getApplication(), R.color.low_risk_background)
-        RiskProbability.MODERATE.toCode() ->
-          ContextCompat.getColor(getApplication(), R.color.moderate_risk_background)
-        RiskProbability.HIGH.toCode() ->
-          ContextCompat.getColor(getApplication(), R.color.high_risk_background)
-        else -> ContextCompat.getColor(getApplication(), R.color.unknown_risk_background)
-      }
-    }
-    return ContextCompat.getColor(getApplication(), R.color.unknown_risk_background)
-  }
-
-  private fun getRiskAssessmentStatus(riskAssessment: RiskAssessment?): String {
-    riskAssessment?.let {
-      return StringUtils.upperCase(it.prediction.first().qualitativeRisk.coding.first().display)
-    }
-    return "ACTIVE" // getString(R.string.patient_is_active)
-  }
-
-  //  private fun getLastContactedDate(riskAssessment: RiskAssessment?): String {
-  //    riskAssessment?.let {
-  //      if (it.hasOccurrence()) {
-  //        return LocalDate.parse(
-  //            it.occurrenceDateTimeType.valueAsString,
-  //            DateTimeFormatter.ISO_DATE_TIME
-  //          )
-  //          .localizedString
-  //      }
-  //    }
-  //    return getString(R.string.none)
-  //  }
 
   companion object {
     /**

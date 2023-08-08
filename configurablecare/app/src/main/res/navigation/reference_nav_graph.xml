@@ -30,10 +30,6 @@
         tools:layout="@layout/patient_detail"
     >
     <action
-            android:id="@+id/navigate_to_edit_patient"
-            app:destination="@id/editPatientFragment"
-        />
-    <action
             android:id="@+id/action_patient_details_to_tasksViewPagerFragment"
             app:destination="@id/tasksViewPagerFragment"
         />
@@ -46,15 +42,6 @@
         android:name="com.google.fhir.examples.configurablecare.AddPatientFragment"
         tools:layout="@layout/add_patient_fragment"
     />
-
-  <fragment
-        android:id="@+id/editPatientFragment"
-        android:label="Edit Patient"
-        android:name="com.google.fhir.examples.configurablecare.EditPatientFragment"
-        tools:layout="@layout/add_patient_fragment"
-    >
-    <argument android:name="patient_id" app:argType="string" />
-  </fragment>
 
   <fragment
         android:id="@+id/tasksViewPagerFragment"

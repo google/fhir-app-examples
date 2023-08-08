@@ -39,7 +39,7 @@ class DemoDataStore(private val context: Context) {
     context.dataStorage.edit { pref -> pref[stringPreferencesKey(resourceType.name)] = timestamp }
   }
 
-  suspend fun getLasUpdateTimestamp(resourceType: ResourceType): String? {
+  suspend fun getLastUpdateTimestamp(resourceType: ResourceType): String? {
     return context.dataStorage.data.first()[stringPreferencesKey(resourceType.name)]
   }
 }
