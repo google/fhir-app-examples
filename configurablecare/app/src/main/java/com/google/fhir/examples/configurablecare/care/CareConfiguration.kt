@@ -48,8 +48,7 @@ data class CareConfiguration(var supportedImplementationGuides: List<SupportedIm
 
 object ConfigurationManager {
   private var careConfiguration: CareConfiguration? = null
-  private var taskConfigMap: MutableMap<String, String> = mutableMapOf()
-  private var serviceRequestConfigMap: MutableMap<String, String> = mutableMapOf()
+  private var activeRequestResourceConfiguration: List<RequestResourceConfig> = mutableListOf()
 
   fun getCareConfiguration(context: Context): CareConfiguration {
     if (careConfiguration == null) {
@@ -75,46 +74,17 @@ object ConfigurationManager {
     return bundleCollection
   }
 
-  fun setTaskConfigMap(planDefinitionId: String): MutableMap<String, String> {
-    val taskConfig =
+  fun setActiveRequestResourceConfiguration(planDefinitionId: String) {
+    activeRequestResourceConfiguration =
       careConfiguration
         ?.supportedImplementationGuides
         ?.firstOrNull { it.implementationGuideConfig.entryPoint.contains(planDefinitionId) }
         ?.implementationGuideConfig
-        ?.requestResourceConfigurations?.firstOrNull { it.resourceType == "Task" }!!
-
-    for (entry in taskConfig.values) {
-      taskConfigMap[entry.field] = entry.value
-    }
-    taskConfigMap["maxDuration"] = taskConfig.maxDuration
-    taskConfigMap["unit"] = taskConfig.unit
-
-    return taskConfigMap
+        ?.requestResourceConfigurations!!
   }
 
-  fun getTaskConfigMap(): MutableMap<String, String> {
-    return taskConfigMap
-  }
-
-  fun setServiceRequestConfigMap(planDefinitionId: String): MutableMap<String, String> {
-    val serviceRequestConfig =
-      careConfiguration
-        ?.supportedImplementationGuides
-        ?.firstOrNull { it.implementationGuideConfig.entryPoint.contains(planDefinitionId) }
-        ?.implementationGuideConfig
-        ?.requestResourceConfigurations?.firstOrNull { it.resourceType == "ServiceRequest" }!!
-
-    for (entry in serviceRequestConfig.values) {
-      serviceRequestConfigMap[entry.field] = entry.value
-    }
-    serviceRequestConfigMap["maxDuration"] = serviceRequestConfig.maxDuration
-    serviceRequestConfigMap["unit"] = serviceRequestConfig.unit
-
-    return serviceRequestConfigMap
-  }
-
-  fun getServiceRequestConfigMap(): MutableMap<String, String> {
-    return serviceRequestConfigMap
+  fun getActiveRequestResourceConfiguration(): List<RequestResourceConfig> {
+    return activeRequestResourceConfiguration
   }
 
   private fun readFileFromAssets(context: Context, filename: String): String {

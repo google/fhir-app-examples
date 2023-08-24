@@ -26,7 +26,7 @@ import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.datacapture.mapping.ResourceMapper
 import com.google.fhir.examples.configurablecare.FhirApplication
-import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getServiceRequestConfigMap
+import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getActiveRequestResourceConfiguration
 import com.google.fhir.examples.configurablecare.care.TaskManager
 import java.util.UUID
 import kotlinx.coroutines.launch
@@ -130,9 +130,11 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
             val task =
               taskManager.createTrackingTaskForServiceRequest(
                 resource,
-                getServiceRequestConfigMap(),
                 subjectReference,
-                questionnaireResource.description
+                questionnaireResource.description,
+                getActiveRequestResourceConfiguration().firstOrNull {
+                  it.resourceType == "ServiceRequest"
+                }!!
               )
             saveResourceToDatabase(task)
           }

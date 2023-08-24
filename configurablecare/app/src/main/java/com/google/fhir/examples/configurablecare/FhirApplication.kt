@@ -26,14 +26,10 @@ import com.google.android.fhir.FhirEngineProvider
 import com.google.android.fhir.ServerConfiguration
 import com.google.android.fhir.datacapture.DataCaptureConfig
 import com.google.android.fhir.datacapture.XFhirQueryResolver
-import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
 import com.google.android.fhir.sync.Sync
 import com.google.android.fhir.sync.remote.HttpLogger
-import com.google.android.fhir.workflow.FhirOperator
-import com.google.android.fhir.workflow.FhirOperatorBuilder
 import com.google.fhir.examples.configurablecare.care.CarePlanManager
-import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getTaskConfigMap
 import com.google.fhir.examples.configurablecare.care.TaskManager
 import com.google.fhir.examples.configurablecare.data.FhirSyncWorker
 import com.google.fhir.examples.configurablecare.external.ValueSetResolver
@@ -43,8 +39,6 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
   private val BASE_URL = "http://10.0.2.2:8088/fhir/"
   // Only initiate the FhirEngine when used for the first time, not when the app is created.
   private val fhirEngine: FhirEngine by lazy { constructFhirEngine() }
-  private val knowledgeManager: KnowledgeManager by lazy { constructKnowledgeManager() }
-  private val fhirOperator: FhirOperator by lazy { constructFhirOperator() }
   private val taskManager: TaskManager by lazy { constructTaskManager() }
   private val carePlanManager: CarePlanManager by lazy { constructCarePlanManager() }
   private var dataCaptureConfig: DataCaptureConfig? = null
@@ -86,23 +80,12 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
     return FhirEngineProvider.getInstance(this)
   }
 
-  private fun constructKnowledgeManager(): KnowledgeManager {
-    return KnowledgeManager.createInMemory(this)
-  }
-  private fun constructFhirOperator(): FhirOperator {
-    return FhirOperatorBuilder(this.applicationContext)
-      .withFhirContext(FhirContext.forR4())
-      .withFhirEngine(fhirEngine)
-      .withIgManager(knowledgeManager)
-      .build()
-  }
-
   private fun constructCarePlanManager(): CarePlanManager {
-    return CarePlanManager(fhirEngine, knowledgeManager, fhirOperator, taskManager, this)
+    return CarePlanManager(fhirEngine, FhirContext.forR4(), this)
   }
 
   private fun constructTaskManager(): TaskManager {
-    return TaskManager(fhirEngine, getTaskConfigMap())
+    return TaskManager(fhirEngine)
   }
 
   companion object {

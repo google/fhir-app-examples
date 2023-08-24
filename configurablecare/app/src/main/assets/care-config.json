@@ -1,11 +1,11 @@
 {
   "supportedImplementationGuides": [
     {
-      "location": "http://hostname/fhir/ImplementationGuide/NCDIG",
+      "location": "http://hostname/fhir/ImplementationGuide/NCDScreening",
       "carePlanPolicy": "ACCEPT_ALL",
       "implementationGuideConfig": {
-        "implementationGuideId": "ImplementationGuide/NCDIG",
-        "entryPoint": "PlanDefinition/NCD-Master-Plan-Definition",
+        "implementationGuideId": "ImplementationGuide/NCDScreening",
+        "entryPoint": "PlanDefinition/NCD-Screening-Plan-Definition",
         "requestResourceConfigurations": [
           {
             "resourceType": "Task",
@@ -30,36 +30,15 @@
             "unit": "months"
           }
         ],
-        "supportedValueSets": [
-          {
-            "resourceType": "ValueSet",
-            "id": "ncd-facilities-valueset",
-            "url": "http://localhost/ncd-facilities",
-            "status": "draft",
-            "description": "List of Facilities",
-            "expansion": {
-              "contains": [
-                {
-                  "display": "Facility 1"
-                },
-                {
-                  "display": "Facility 2"
-                },
-                {
-                  "display": "Facility 3"
-                }
-              ]
-            }
-          }
-        ]
+        "supportedValueSets": []
       }
     },
     {
-      "location": "http://hostname/fhir/ImplementationGuide/CBACIG",
+      "location": "http://hostname/fhir/ImplementationGuide/CancerScreening",
       "carePlanPolicy": "ACCEPT_ALL",
       "implementationGuideConfig": {
-        "implementationGuideId": "ImplementationGuide/CBACIG",
-        "entryPoint": "PlanDefinition/CBAC-Master-Plan-Definition",
+        "implementationGuideId": "ImplementationGuide/CancerScreening",
+        "entryPoint": "PlanDefinition/Cancer-Screening-Plan-Definition",
         "requestResourceConfigurations": [
           {
             "resourceType": "Task",
@@ -84,7 +63,7 @@
                 "value": "PractitionerRole/81417c6a-a6ab-453c-a26b-c08791161045"
               }
             ],
-            "maxDuration": "6",
+            "maxDuration": "3",
             "unit": "months"
           }
         ],

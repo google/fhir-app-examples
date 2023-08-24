@@ -155,11 +155,6 @@ class PatientDetailsFragment : Fragment() {
         NavHostFragment.findNavController(this).navigateUp()
         true
       }
-      R.id.menu_patient_edit -> {
-        findNavController()
-          .navigate(PatientDetailsFragmentDirections.navigateToEditPatient(args.patientId))
-        true
-      }
       else -> super.onOptionsItemSelected(item)
     }
   }

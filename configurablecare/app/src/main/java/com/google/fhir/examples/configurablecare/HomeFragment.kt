@@ -29,8 +29,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.fhir.examples.configurablecare.care.CareConfiguration
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
 import com.google.fhir.examples.configurablecare.care.ConfigurationManager
-import com.google.fhir.examples.configurablecare.care.ConfigurationManager.setServiceRequestConfigMap
-import com.google.fhir.examples.configurablecare.care.ConfigurationManager.setTaskConfigMap
+import com.google.fhir.examples.configurablecare.care.ConfigurationManager.setActiveRequestResourceConfiguration
 import com.google.fhir.examples.configurablecare.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {
@@ -77,8 +76,9 @@ class HomeFragment : Fragment() {
         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
           if (p0 != null) {
             workflowExecutionViewModel.currentPlanDefinitionId = p0.getItemAtPosition(p2) as String
-            setTaskConfigMap(workflowExecutionViewModel.currentPlanDefinitionId)
-            setServiceRequestConfigMap(workflowExecutionViewModel.currentPlanDefinitionId)
+            setActiveRequestResourceConfiguration(
+              workflowExecutionViewModel.currentPlanDefinitionId
+            )
           }
         }
         override fun onNothingSelected(p0: AdapterView<*>?) {}

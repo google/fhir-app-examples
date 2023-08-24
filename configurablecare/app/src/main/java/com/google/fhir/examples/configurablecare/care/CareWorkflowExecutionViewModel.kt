@@ -19,6 +19,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.fhir.examples.configurablecare.FhirApplication
+import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getActiveRequestResourceConfiguration
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,7 +69,8 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
         runBlocking {
           carePlanManager.applyPlanDefinitionOnPatient(
             currentPlanDefinitionId,
-            careWorkflowExecutionRequest.patient
+            careWorkflowExecutionRequest.patient,
+            getActiveRequestResourceConfiguration()
           )
         }
         patientFlowForCareWorkflowExecution.emit(

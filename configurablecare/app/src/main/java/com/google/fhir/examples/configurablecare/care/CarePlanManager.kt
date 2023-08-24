@@ -21,7 +21,7 @@ import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
-import com.google.android.fhir.workflow.FhirOperator
+import com.google.android.fhir.workflow.FhirOperatorBuilder
 import java.io.File
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CanonicalType
@@ -39,11 +39,18 @@ import org.hl7.fhir.r4.model.Task
 
 class CarePlanManager(
   private var fhirEngine: FhirEngine,
-  private var knowledgeManager: KnowledgeManager,
-  private var fhirOperator: FhirOperator,
-  private val taskManager: TaskManager,
-  private val context: Context
+  fhirContext: FhirContext,
+  private val context: Context,
 ) {
+  private var knowledgeManager = KnowledgeManager.createInMemory(context)
+  private var fhirOperator =
+    FhirOperatorBuilder(context.applicationContext)
+      .withFhirContext(fhirContext)
+      .withFhirEngine(fhirEngine)
+      .withIgManager(knowledgeManager)
+      .build()
+
+  private var taskManager: TaskManager = TaskManager(fhirEngine)
   private var planDefinitionIdList = ArrayList<String>()
   private var cqlLibraryIdList = ArrayList<String>()
   private val jsonParser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
@@ -59,8 +66,9 @@ class CarePlanManager(
       writeText(jsonParser.encodeResourceToString(resource))
     }
   }
+
   suspend fun getPlanDefinitionDependentResources(
-    planDefinition: PlanDefinition
+    planDefinition: PlanDefinition,
   ): Collection<Resource> {
     var bundleCollection: Collection<Resource> = mutableListOf()
 
@@ -100,7 +108,11 @@ class CarePlanManager(
     planDefinitionIdList.add(IdType(planDefinitionId).idPart)
   }
 
-  suspend fun applyPlanDefinitionOnPatient(planDefinitionId: String, patient: Patient) {
+  suspend fun applyPlanDefinitionOnPatient(
+    planDefinitionId: String,
+    patient: Patient,
+    requestResourceConfigs: List<RequestResourceConfig>
+  ) {
     val patientId = IdType(patient.id).idPart
 
     if (cqlLibraryIdList.isEmpty()) {
@@ -115,32 +127,13 @@ class CarePlanManager(
     val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
 
     // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of record
-    acceptCarePlan(carePlanProposal, carePlanOfRecord)
-  }
-
-  suspend fun applyAllPlanDefinitionsOnPatient(patient: Patient) {
-    val patientId = IdType(patient.id).idPart
-
-    if (cqlLibraryIdList.isEmpty()) {
-      loadCarePlanResourcesFromDb()
-    }
-
-    for (planDefinitionId in planDefinitionIdList) {
-      val carePlanProposal =
-        fhirOperator.generateCarePlan(planDefinitionId = planDefinitionId, patientId = patientId)
-          as CarePlan
-
-      // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
-      val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
-
-      // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of record
-      acceptCarePlan(carePlanProposal, carePlanOfRecord)
-    }
+    acceptCarePlan(carePlanProposal, carePlanOfRecord, requestResourceConfigs)
   }
 
   suspend fun applyPlanDefinitionOnMultiplePatients(
     planDefinitionId: String,
-    patientList: List<Patient>
+    patientList: List<Patient>,
+    requestResourceConfigs: List<RequestResourceConfig>
   ) {
     if (cqlLibraryIdList.isEmpty()) {
       loadCarePlanResourcesFromDb()
@@ -157,32 +150,7 @@ class CarePlanManager(
       val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
 
       // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of record
-      acceptCarePlan(carePlanProposal, carePlanOfRecord)
-    }
-  }
-
-  suspend fun applyAllPlanDefinitionsOnMultiplePatients(patientList: List<Patient>) {
-
-    if (cqlLibraryIdList.isEmpty()) {
-      loadCarePlanResourcesFromDb()
-    }
-
-    for (patient in patientList) {
-      val patientId = IdType(patient.id).idPart
-
-      for (planDefinitionId in planDefinitionIdList) {
-        val carePlanProposal =
-          fhirOperator.generateCarePlan(planDefinitionId = planDefinitionId, patientId = patientId)
-            as CarePlan
-
-        // Fetch existing CarePlan of record for the Patient or create a new one if it does not
-        // exist
-        val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
-
-        // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of
-        // record
-        acceptCarePlan(carePlanProposal, carePlanOfRecord)
-      }
+      acceptCarePlan(carePlanProposal, carePlanOfRecord, requestResourceConfigs)
     }
   }
 
@@ -246,12 +214,19 @@ class CarePlanManager(
     }
   }
 
-  private suspend fun createProposedRequestResources(resourceList: List<Resource>): List<Resource> {
+  private suspend fun createProposedRequestResources(
+    resourceList: List<Resource>,
+    requestResourceConfigs: List<RequestResourceConfig>
+  ): List<Resource> {
     val createdRequestResources = ArrayList<Resource>()
     for (resource in resourceList) {
       when (resource.fhirType()) {
         "Task" -> {
-          val task = taskManager.createRequestResource(resource as Task)
+          val task =
+            taskManager.createRequestResource(
+              resource as Task,
+              requestResourceConfigs.firstOrNull { it.resourceType == "Task" }!!
+            )
           createdRequestResources.add(task)
         }
         "ServiceRequest" -> TODO("Not supported yet")
@@ -268,8 +243,13 @@ class CarePlanManager(
     return createdRequestResources
   }
 
-  private suspend fun acceptCarePlan(proposedCarePlan: CarePlan, carePlanOfRecord: CarePlan) {
-    val resourceList = createProposedRequestResources(proposedCarePlan.contained)
+  private suspend fun acceptCarePlan(
+    proposedCarePlan: CarePlan,
+    carePlanOfRecord: CarePlan,
+    requestResourceConfigs: List<RequestResourceConfig>
+  ) {
+    val resourceList =
+      createProposedRequestResources(proposedCarePlan.contained, requestResourceConfigs)
     updateCarePlanWithProtocol(carePlanOfRecord, proposedCarePlan.instantiatesCanonical)
     addRequestResourcesToCarePlanOfRecord(carePlanOfRecord, resourceList)
 
@@ -281,7 +261,7 @@ class CarePlanManager(
     carePlan: CarePlan,
     requestedActivityResource: Resource,
     carePlanActivityStatus: CarePlanActivityStatus,
-    outcomeReferences: List<Reference>
+    outcomeReferences: List<Reference>,
   ) {
     if (carePlan.isEmpty) return
     for (activity in carePlan.activity) {
@@ -301,7 +281,7 @@ class CarePlanManager(
     requestResource: Resource,
     requestResourceStatus: String,
     outcomeReferences: List<Reference>,
-    updateCarePlan: Boolean = true
+    updateCarePlan: Boolean = true,
   ) {
     val carePlanActivityStatus: CarePlanActivityStatus
     val carePlan: CarePlan

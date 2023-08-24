@@ -19,7 +19,7 @@ import org.hl7.fhir.r4.model.CarePlan
 
 interface RequestResourceManager<T> {
 
-  suspend fun createRequestResource(resource: T): T
+  suspend fun createRequestResource(resource: T, requestResourceConfig: RequestResourceConfig): T
 
   suspend fun updateRequestResourceStatus(resource: T, status: String)
 

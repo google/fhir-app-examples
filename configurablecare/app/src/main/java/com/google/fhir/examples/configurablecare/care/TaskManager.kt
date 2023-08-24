@@ -32,12 +32,12 @@ import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.model.Task.TaskStatus
 
-class TaskManager(
-  private var fhirEngine: FhirEngine,
-  private val taskConfigMap: MutableMap<String, String>
-) : RequestResourceManager<Task> {
+class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<Task> {
 
-  override suspend fun createRequestResource(resource: Task): Task {
+  override suspend fun createRequestResource(
+    resource: Task,
+    requestResourceConfig: RequestResourceConfig
+  ): Task {
     resource.id = null // purge any temporary id that might exist
     resource.status = TaskStatus.READY
     resource.owner = null
@@ -46,10 +46,15 @@ class TaskManager(
     resource.intent = Task.TaskIntent.ORDER
     resource.lastModified = Date.from(Instant.now())
 
+    // modify this to use the requestResourceConfig
     resource.restriction.period.end =
-      setDeadline(taskConfigMap["maxDuration"], taskConfigMap["unit"])
-    taskConfigMap["owner"]?.let { assignOwner(resource, it) }
-    taskConfigMap["requester"]?.let { assignRequester(resource, it) }
+      setDeadline(requestResourceConfig.maxDuration, requestResourceConfig.unit)
+    requestResourceConfig.values
+      .firstOrNull { it.field == "owner" }
+      ?.let { assignOwner(resource, it.value) }
+    requestResourceConfig.values
+      .firstOrNull { it.field == "requester" }
+      ?.let { assignRequester(resource, it.value) }
 
     fhirEngine.create(resource)
     return resource
@@ -158,9 +163,9 @@ class TaskManager(
 
   fun createTrackingTaskForServiceRequest(
     serviceRequest: ServiceRequest,
-    configMap: MutableMap<String, String>,
     subjectReference: Reference,
-    description: String?
+    description: String?,
+    requestResourceConfig: RequestResourceConfig
   ): Task {
     val task = Task()
     task.owner = serviceRequest.requester
@@ -171,9 +176,9 @@ class TaskManager(
     task.intent = Task.TaskIntent.ORDER
     task.lastModified = Date.from(Instant.now())
 
-    val serviceRequestFieldMap = ConfigurationManager.getServiceRequestConfigMap()
     task.restriction.period.end =
-      setDeadline(serviceRequestFieldMap["maxDuration"], serviceRequestFieldMap["unit"])
+      setDeadline(requestResourceConfig.maxDuration, requestResourceConfig.unit)
+
     return task
   }
 
