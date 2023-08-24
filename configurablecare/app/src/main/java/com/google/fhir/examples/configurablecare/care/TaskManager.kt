@@ -32,8 +32,10 @@ import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.model.Task.TaskStatus
 
+/** Responsible for creating and managing Task resources */
 class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<Task> {
 
+  /** Create a new [Task] and apply application-specific configurations to it */
   override suspend fun createRequestResource(
     resource: Task,
     requestResourceConfig: RequestResourceConfig
@@ -46,7 +48,6 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     resource.intent = Task.TaskIntent.ORDER
     resource.lastModified = Date.from(Instant.now())
 
-    // modify this to use the requestResourceConfig
     resource.restriction.period.end =
       setDeadline(requestResourceConfig.maxDuration, requestResourceConfig.unit)
     requestResourceConfig.values
@@ -60,12 +61,14 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     return resource
   }
 
+  /** Update [Task] status */
   override suspend fun updateRequestResourceStatus(resource: Task, status: String) {
     resource.status = TaskStatus.valueOf(status)
     resource.executionPeriod.end = Date.from(Instant.now())
     fhirEngine.update(resource)
   }
 
+  /** Map [Task] status to [CarePlan] status */
   override fun mapRequestResourceStatusToCarePlanStatus(
     resource: Task
   ): CarePlan.CarePlanActivityStatus {
@@ -89,12 +92,16 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     }
   }
 
+  /** Add [CarePlan] reference to the [Task] */
   override suspend fun linkCarePlanToRequestResource(resource: Task, carePlan: CarePlan) {
-    // resource.basedOn.add(Reference(IdType(carePlan.id).idPart).setType(carePlan.fhirType()))
     resource.basedOn.add(Reference(carePlan).setType(carePlan.fhirType()))
     fhirEngine.update(resource)
   }
 
+  /**
+   * Fetch the respective [Questionnaire] for a [Task] whose purpose is the completion of a FHIR
+   * Questionnaire
+   */
   suspend fun fetchQuestionnaireFromTaskLogicalId(taskResourceId: String): Questionnaire? {
     val task = fhirEngine.get(ResourceType.Task, taskResourceId) as Task
     val questionnaires =
@@ -107,14 +114,7 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     return questionnaires.firstOrNull()
   }
 
-  suspend fun fetchServiceRequestFromTaskLogicalId(taskResourceId: String): ServiceRequest {
-    val task = fhirEngine.get(ResourceType.Task, taskResourceId) as Task
-    return fhirEngine.get(
-      ResourceType.ServiceRequest,
-      task.focus.reference.substring("ServiceRequest/".length)
-    ) as ServiceRequest
-  }
-
+  /** Fetch all Tasks for a given Patient */
   suspend fun getTasksForPatient(
     patientId: String,
     extraFilter: (Search.() -> Unit)?,
@@ -132,6 +132,7 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     }
   }
 
+  /** Populate the requester field in the given [Task] */
   private suspend fun assignRequester(resource: Task, requesterId: String) {
     val requesterResource =
       fhirEngine.get(
@@ -147,6 +148,7 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     resource.apply { requester = requesterReference }
   }
 
+  /** Populate the owner field in the given [Task] */
   override suspend fun assignOwner(resource: Task, ownerId: String) {
     val ownerResource =
       fhirEngine.get(ResourceType.fromCode(ownerId.substringBefore("/")), IdType(ownerId).idPart)
@@ -157,10 +159,12 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     resource.apply { owner = ownerReference }
   }
 
+  /** Compute the number of Tasks for a given Patient */
   suspend fun getTasksCount(patientId: String, extraFilter: (Search.() -> Unit)?): Int {
     return extraFilter?.let { getTasksForPatient(patientId, it, null).count() } ?: 0
   }
 
+  /** Create a new [Task] that can track the progress of a [ServiceRequest] */
   fun createTrackingTaskForServiceRequest(
     serviceRequest: ServiceRequest,
     subjectReference: Reference,
@@ -182,6 +186,12 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     return task
   }
 
+  /**
+   * Set the due date of a [Task]
+   *
+   * @param maxDuration Numerical value of the time duration
+   * @param unit Unit of time: "days", "months" or "years"
+   */
   private fun setDeadline(maxDuration: String?, unit: String?): Date {
     if (unit.isNullOrEmpty() || maxDuration.isNullOrEmpty())
       return Date.from(Instant.now().plus(Period.ofDays(365))) // default: 1 year

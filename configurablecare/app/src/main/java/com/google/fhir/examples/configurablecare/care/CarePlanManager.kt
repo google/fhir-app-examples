@@ -37,6 +37,7 @@ import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.Task
 
+/** Responsible for creating and managing CarePlans */
 class CarePlanManager(
   private var fhirEngine: FhirEngine,
   fhirContext: FhirContext,
@@ -51,7 +52,6 @@ class CarePlanManager(
       .build()
 
   private var taskManager: TaskManager = TaskManager(fhirEngine)
-  private var planDefinitionIdList = ArrayList<String>()
   private var cqlLibraryIdList = ArrayList<String>()
   private val jsonParser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
 
@@ -67,12 +67,18 @@ class CarePlanManager(
     }
   }
 
+  /**
+   * Extracts resources present in PlanDefinition.contained field
+   *
+   * We cannot use $data-requirements on the [PlanDefinition] yet. So, we assume that all knowledge
+   * resources required to $apply a [PlanDefinition] are present within `PlanDefinition.contained`
+   *
+   * @param planDefinition PlanDefinition resource for which dependent resources are extracted
+   */
   suspend fun getPlanDefinitionDependentResources(
     planDefinition: PlanDefinition,
   ): Collection<Resource> {
     var bundleCollection: Collection<Resource> = mutableListOf()
-
-    addPlanDefinition(IdType(planDefinition.id).idPart)
 
     for (resource in planDefinition.contained) {
       if (resource is Bundle) {
@@ -91,6 +97,10 @@ class CarePlanManager(
     return bundleCollection
   }
 
+  /**
+   * Knowledge resources are loaded from [FhirEngine] and installed so that they may be used when
+   * running $apply on a [PlanDefinition]
+   */
   private suspend fun loadCarePlanResourcesFromDb() {
     // Load Library resources
     val availableCqlLibraries = fhirEngine.search<Library> {}
@@ -104,10 +114,15 @@ class CarePlanManager(
     }
   }
 
-  private fun addPlanDefinition(planDefinitionId: String) {
-    planDefinitionIdList.add(IdType(planDefinitionId).idPart)
-  }
-
+  /**
+   * Executes $apply on a [PlanDefinition] for a [Patient] and creates the request resources as per
+   * the proposed [CarePlan]
+   *
+   * @param planDefinitionId PlanDefinition resource ID for which $apply is run
+   * @param patient Patient resource for which the [PlanDefinition] $apply is run
+   * @param requestResourceConfigs List of configurations that need to be applied to the request
+   * resources as a result of the proposed [CarePlan]
+   */
   suspend fun applyPlanDefinitionOnPatient(
     planDefinitionId: String,
     patient: Patient,
@@ -130,6 +145,15 @@ class CarePlanManager(
     acceptCarePlan(carePlanProposal, carePlanOfRecord, requestResourceConfigs)
   }
 
+  /**
+   * Executes $apply on a [PlanDefinition] for a list of patients and creates the request resources
+   * as per the proposed CarePlans
+   *
+   * @param planDefinitionId PlanDefinition resource ID for which $apply is run
+   * @param patientList List of Patient resources for which the [PlanDefinition] $apply is run
+   * @param requestResourceConfigs List of configurations that need to be applied to the request
+   * resources as a result of the proposed [CarePlan]
+   */
   suspend fun applyPlanDefinitionOnMultiplePatients(
     planDefinitionId: String,
     patientList: List<Patient>,
@@ -154,6 +178,7 @@ class CarePlanManager(
     }
   }
 
+  /** Fetch the [CarePlan] of record for a given [Patient], if it exists, otherwise create it */
   private suspend fun getCarePlanOfRecordForPatient(patient: Patient): CarePlan {
     val patientId = IdType(patient.id).idPart
     val existingCarePlans = fhirEngine.search("CarePlan?subject=$patientId")
@@ -170,10 +195,12 @@ class CarePlanManager(
     }
   }
 
+  /** Update the [CarePlan] to include a reference to the FHIR-define protocol or guideline */
   private fun updateCarePlanWithProtocol(carePlan: CarePlan, uris: List<CanonicalType>) {
     for (uri in uris) carePlan.addInstantiatesCanonical(uri.value)
   }
 
+  /** Link the request resources created for the [Patient] back to the [CarePlan] of record */
   private fun addRequestResourcesToCarePlanOfRecord(
     carePlan: CarePlan,
     requestResourceList: List<Resource>
@@ -195,6 +222,7 @@ class CarePlanManager(
     }
   }
 
+  /** Add the [CarePlan] reference to the request resources */
   private suspend fun linkRequestResourcesToCarePlan(
     carePlan: CarePlan,
     requestResourceList: List<Resource>
@@ -214,6 +242,14 @@ class CarePlanManager(
     }
   }
 
+  /**
+   * Invokes the respective [RequestResourceManager] to create new request resources as per the
+   * proposed [CarePlan]
+   *
+   * @param resourceList List of request resources to be created
+   * @param requestResourceConfigs Application-specific configurations to be applied on the created
+   * request resources
+   */
   private suspend fun createProposedRequestResources(
     resourceList: List<Resource>,
     requestResourceConfigs: List<RequestResourceConfig>
@@ -243,6 +279,16 @@ class CarePlanManager(
     return createdRequestResources
   }
 
+  /**
+   * Accept the proposed [CarePlan] and create the proposed request resources as per the
+   * configurations
+   *
+   * @param proposedCarePlan Proposed [CarePlan] generated when $apply is run on a [PlanDefinition]
+   * @param carePlanOfRecord CarePlan of record for a [Patient] which needs to be updated with the
+   * new request resources created as per the proposed CarePlan
+   * @param requestResourceConfigs Application-specific configurations to be applied on the created
+   * request resources
+   */
   private suspend fun acceptCarePlan(
     proposedCarePlan: CarePlan,
     carePlanOfRecord: CarePlan,
@@ -257,6 +303,7 @@ class CarePlanManager(
     linkRequestResourcesToCarePlan(carePlanOfRecord, resourceList)
   }
 
+  /** Update status of a [CarePlan] activity */
   private suspend fun updateCarePlanStatus(
     carePlan: CarePlan,
     requestedActivityResource: Resource,
@@ -277,6 +324,10 @@ class CarePlanManager(
     }
   }
 
+  /**
+   * Find and update the status of the [CarePlan] activity as per the corresponding request resource
+   * status
+   */
   suspend fun updateCarePlanActivity(
     requestResource: Resource,
     requestResourceStatus: String,
