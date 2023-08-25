@@ -19,7 +19,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.fhir.examples.configurablecare.FhirApplication
-import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getActiveRequestResourceConfiguration
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,6 +35,7 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
     FhirApplication.fhirEngine(getApplication<Application>().applicationContext)
   private val carePlanManager =
     FhirApplication.carePlanManager(getApplication<Application>().applicationContext)
+  private lateinit var activeRequestResourceConfiguration: List<RequestResourceConfig>
   lateinit var currentPlanDefinitionId: String
 
   /**
@@ -119,5 +119,18 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
       )
       executeCareWorkflowForPatient(taskPatient)
     }
+  }
+
+  fun setActiveRequestResourceConfiguration(planDefinitionId: String) {
+    activeRequestResourceConfiguration =
+      ConfigurationManager.careConfiguration
+        ?.supportedImplementationGuides
+        ?.firstOrNull { it.implementationGuideConfig.entryPoint.contains(planDefinitionId) }
+        ?.implementationGuideConfig
+        ?.requestResourceConfigurations!!
+  }
+
+  fun getActiveRequestResourceConfiguration(): List<RequestResourceConfig> {
+    return activeRequestResourceConfiguration
   }
 }

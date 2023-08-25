@@ -48,6 +48,8 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
     setHasOptionsMenu(true)
     onBackPressed()
     setViewModelQuestionnaire()
+    viewModel.requestResourceConfiguration =
+      careWorkflowExecutionViewModel.getActiveRequestResourceConfiguration()
     observeResourcesSaveAction()
     if (savedInstanceState == null) {
       addQuestionnaireFragment()

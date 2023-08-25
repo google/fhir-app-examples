@@ -47,8 +47,7 @@ data class SupportedImplementationGuide(
 data class CareConfiguration(var supportedImplementationGuides: List<SupportedImplementationGuide>)
 
 object ConfigurationManager {
-  private var careConfiguration: CareConfiguration? = null
-  private var activeRequestResourceConfiguration: List<RequestResourceConfig> = mutableListOf()
+  var careConfiguration: CareConfiguration? = null
 
   fun getCareConfiguration(context: Context): CareConfiguration {
     if (careConfiguration == null) {
@@ -72,19 +71,6 @@ object ConfigurationManager {
       }
     }
     return bundleCollection
-  }
-
-  fun setActiveRequestResourceConfiguration(planDefinitionId: String) {
-    activeRequestResourceConfiguration =
-      careConfiguration
-        ?.supportedImplementationGuides
-        ?.firstOrNull { it.implementationGuideConfig.entryPoint.contains(planDefinitionId) }
-        ?.implementationGuideConfig
-        ?.requestResourceConfigurations!!
-  }
-
-  fun getActiveRequestResourceConfiguration(): List<RequestResourceConfig> {
-    return activeRequestResourceConfiguration
   }
 
   private fun readFileFromAssets(context: Context, filename: String): String {
