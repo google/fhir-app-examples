@@ -35,8 +35,8 @@ import org.hl7.fhir.r4.model.Task.TaskStatus
 /** Responsible for creating and managing Task resources */
 class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<Task> {
 
-  /** Create a new [Task] and apply application-specific configurations to it */
-  override suspend fun createRequestResource(
+  /**Update [Task] resource with application-specific configurations and add it to [FhirEngine].*/
+  override suspend fun updateRequestResource(
     resource: Task,
     requestResourceConfig: RequestResourceConfig
   ): Task {
