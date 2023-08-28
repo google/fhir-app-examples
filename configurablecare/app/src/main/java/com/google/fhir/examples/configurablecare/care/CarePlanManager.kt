@@ -51,7 +51,7 @@ class CarePlanManager(
       .withIgManager(knowledgeManager)
       .build()
 
-  private var taskManager: TaskManager = TaskManager(fhirEngine)
+  private var taskManager: RequestResourceManager<Task> = TaskManager(fhirEngine)
   private var cqlLibraryIdList = ArrayList<String>()
   private val jsonParser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
 
@@ -259,7 +259,7 @@ class CarePlanManager(
       when (resource.fhirType()) {
         "Task" -> {
           val task =
-            taskManager.createRequestResource(
+            taskManager.updateRequestResource(
               resource as Task,
               requestResourceConfigs.firstOrNull { it.resourceType == "Task" }!!
             )
