@@ -1,29 +1,29 @@
 # Configurable Care
 
-This is a reference FHIR based client application that demonstrates the power of clinical workflows and configurable screenings. It uses the [Android FHIR SDK](https://github.com/google/android-fhir) ([Engine](https://github.com/google/android-fhir/wiki/FHIR-Engine-Library), [DataCapture](https://github.com/google/android-fhir/wiki/Structured-Data-Capture-Library) and [Workflow](https://github.com/google/android-fhir/wiki/Workflow-Library) libraries) to execute workflow logic and provide basic support for managing [CarePlan](https://www.hl7.org/fhir/careplan.html) and [Task](https://www.hl7.org/fhir/task.html) resources.
+As an implementer it is easier to build and deploy configurable care delivery applications for different health programs that can leverage evidence based guidelines (e.g. SMART Guidelines). The Configurable Care application is a reference application that enables dynamic deployment of FHIR content to drive care delivery i.e. workflows. It uses the [Android FHIR SDK](https://github.com/google/android-fhir) ([Engine](https://github.com/google/android-fhir/wiki/FHIR-Engine-Library), [DataCapture](https://github.com/google/android-fhir/wiki/Structured-Data-Capture-Library) and [Workflow](https://github.com/google/android-fhir/wiki/Workflow-Library) libraries) to execute workflow logic and provide basic support for managing [CarePlan](https://www.hl7.org/fhir/careplan.html) and [Task](https://www.hl7.org/fhir/task.html) resources.
 
 
 ## Running the Application
-### Download the code
+### 1. Download the code
 To download the code, clone the [FHIR App Examples](https://github.com/google/fhir-app-examples) repo: \
 `git clone https://github.com/google/fhir-app-examples.git`
 
-### Import the `configurablecare` app into Android Studio
+### 2. Import the `configurablecare` app into Android Studio
 
-Open Android Studio, select `Open...` and choose the `configurablecare` folder from the source code that you have downloaded earlier.
+Open Android Studio, select `Open...` and choose the `configurablecare` folder from the source code that you downloaded earlier.
 
-### Set up a local HAPI FHIR server with test data
+### 3. Set up a local HAPI FHIR server with test data
 Run the following command in a terminal to get the latest image of HAPI FHIR: \
 `docker pull hapiproject/hapi:latest`
 
 Create a HAPI FHIR container by either using Docker Desktop to run the previously downloaded image `hapiproject/hapi`, or by running the following command: \
 `docker run -p 8080:8080 hapiproject/hapi:latest` \
-Learn [more](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#running-via-docker-hub).
+*Learn [more](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#running-via-docker-hub).*
 
 You should see the HAPI FHIR web interface when you navigate to http://localhost:8080/ in a browser.
 
 #### Test data
-*You make skip this step and use your own data instead of the sample FHIR resources provided in this application.*
+*You may skip this step and use your own data instead of the sample FHIR resources provided in this application.*
 
 The `configurablecare/app/src/main/assets` directory contains a FHIR Bundle `fhir-resources-example.json` with some example resources for running the Configurable Care application:
 - Knowledge resources for conducting screenings ([PlanDefinitions](https://www.hl7.org/fhir/plandefinition.html), [ActivityDefinitions](https://www.hl7.org/fhir/activitydefinition.html), [Questionnaires](https://www.hl7.org/fhir/questionnaire.html))
@@ -47,7 +47,7 @@ http:/localhost:8080/fhir/
 
 *This config may be left unaltered when running the application using the sample FHIR resources provided.*
 
-### Run the `configurablecare` app
+### 4. Run the `configurablecare` app
 Now that you have imported the project into Android Studio and set up the FHIR server with test data, you are ready to run the `configurablecare` app for the first time.
 
 Start the Android Studio emulator, and click Run in the Android Studio toolbar.
