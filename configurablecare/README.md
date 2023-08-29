@@ -26,9 +26,9 @@ You should see the HAPI FHIR web interface when you navigate to http://localhost
 *You may skip this step and use your own data instead of the sample FHIR resources provided in this application.*
 
 The `configurablecare/app/src/main/assets` directory contains a FHIR Bundle `fhir-resources-example.json` with some example resources for running the Configurable Care application:
-- Knowledge resources for conducting screenings ([PlanDefinitions](https://www.hl7.org/fhir/plandefinition.html), [ActivityDefinitions](https://www.hl7.org/fhir/activitydefinition.html), [Questionnaires](https://www.hl7.org/fhir/questionnaire.html))
-- Practitioner related resources ([Practitioners](https://www.hl7.org/fhir/practitioner.html) [PractitionerRoles](https://www.hl7.org/fhir/practitionerrole.html), [Organizations](https://www.hl7.org/fhir/organization.html), [Locations](https://www.hl7.org/fhir/location.html))
-- Patient related resources ([Patient](https://www.hl7.org/fhir/patient.html), [Tasks](https://www.hl7.org/fhir/task.html), [CarePlans](https://www.hl7.org/fhir/careplan.html))
+- Knowledge resources for conducting screenings ([PlanDefinition](https://www.hl7.org/fhir/plandefinition.html), [Library](https://www.hl7.org/fhir/library.html), [ActivityDefinition](https://www.hl7.org/fhir/activitydefinition.html), [Questionnaire](https://www.hl7.org/fhir/questionnaire.html))
+- Practitioner related resources ([Practitioner](https://www.hl7.org/fhir/practitioner.html), [PractitionerRole](https://www.hl7.org/fhir/practitionerrole.html), [Organization](https://www.hl7.org/fhir/organization.html), [Location](https://www.hl7.org/fhir/location.html))
+- Patient related resources ([Patient](https://www.hl7.org/fhir/patient.html), [Task](https://www.hl7.org/fhir/task.html), [CarePlan](https://www.hl7.org/fhir/careplan.html), [Encounter](https://www.hl7.org/fhir/encounter.html))
 
 To upload these FHIR resources to the local HAPI FHIR server, run the following command from the `configurablecare` directory:
 
@@ -39,7 +39,7 @@ http:/localhost:8080/fhir/
 ```
 
 #### Care Config
-*You may skip this step if you are using the example resources provided in this application. If you are using your own data, you will need to modify `assets/care-config.json`.*
+*You may skip this step if you are using the example resources provided in this application. However, if you are using your own data, you will need to modify `assets/care-config.json`.*
 
 `care-confg.json` is an application level JSON config that allows the user to configure:
 - PlanDefinition resources that the application is authorized to access
@@ -52,7 +52,7 @@ Now that you have imported the project into Android Studio and set up the FHIR s
 
 Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 
-### Demo
+## Demo
 Watch the video below for a demo of the Configurable Care application using the sample FHIR data provided:
 
 https://github.com/MJ1998/fhir-app-examples/assets/112697704/1aa9e3ea-3a5e-4a25-8bb1-f62334a2c164
