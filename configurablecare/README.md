@@ -55,5 +55,4 @@ Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 ### Demo
 Watch the video below for a demo of the Configurable Care application using the sample FHIR data provided:
 
-<video src="demo/configurable-care.mp4" controls="controls" style="max-width: 730px;">
-</video>
+https://github.com/MJ1998/fhir-app-examples/assets/112697704/1aa9e3ea-3a5e-4a25-8bb1-f62334a2c164
