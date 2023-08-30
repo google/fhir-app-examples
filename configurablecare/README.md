@@ -56,3 +56,10 @@ Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 Watch the video below for a demo of the Configurable Care application using the sample FHIR data provided:
 
 https://github.com/MJ1998/fhir-app-examples/assets/112697704/1aa9e3ea-3a5e-4a25-8bb1-f62334a2c164
+
+## Disclaimer
+This product is not intended to be a medical device.
+
+The FHIR resources provided in this application are intended to be examples that illustrate the utility of Configurable Care. They must NOT be used for any medical purpose under any circumstances.
+
+HL7®, and FHIR® are the registered trademarks of Health Level Seven International and their use of these trademarks does not constitute an endorsement by HL7.
