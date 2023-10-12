@@ -43,7 +43,7 @@ class CarePlanManager(
   fhirContext: FhirContext,
   private val context: Context,
 ) {
-  private var knowledgeManager = KnowledgeManager.createInMemory(context)
+  private var knowledgeManager = KnowledgeManager.create(context, inMemory = true)
   private var fhirOperator =
     FhirOperatorBuilder(context.applicationContext)
       .withFhirContext(fhirContext)

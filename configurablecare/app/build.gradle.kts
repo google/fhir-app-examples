@@ -139,6 +139,6 @@ dependencies {
   implementation("com.auth0.android:jwtdecode:2.0.1")
   implementation("com.google.android.fhir:engine:0.1.0-beta03")
   implementation("com.google.android.fhir:data-capture:1.0.0")
-  implementation("com.google.android.fhir:knowledge:0.1.0-alpha01")
+  implementation("com.google.android.fhir:knowledge:0.1.0-alpha02")
   implementation("com.google.android.fhir:workflow:0.1.0-alpha03")
 }
