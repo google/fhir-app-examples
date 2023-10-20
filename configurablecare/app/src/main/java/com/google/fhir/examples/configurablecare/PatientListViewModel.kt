@@ -105,7 +105,7 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
         from = 0
       }
       .mapIndexed { index, fhirPatient ->
-        fhirPatient.toPatientItem(index + 1).apply {
+        fhirPatient.resource.toPatientItem(index + 1).apply {
           pendingTasksCount =
             taskManager.getTasksCount(resourceId) {
               filter(Task.STATUS, { value = of(getTaskStatus(0)) })
@@ -127,6 +127,7 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
   private suspend fun getRiskAssessments(): Map<String, RiskAssessment?> {
     return fhirEngine
       .search<RiskAssessment> {}
+      .map { it.resource }
       .groupBy { it.subject.reference }
       .mapValues { entry ->
         entry.value

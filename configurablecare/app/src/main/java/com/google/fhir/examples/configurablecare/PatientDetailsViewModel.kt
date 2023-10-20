@@ -64,7 +64,7 @@ class PatientDetailsViewModel(
     fhirEngine
       .search<Observation> { filter(Observation.SUBJECT, { value = "Patient/$patientId" }) }
       .take(MAX_RESOURCE_COUNT)
-      .map { createObservationItem(it, getApplication<Application>().resources) }
+      .map { createObservationItem(it.resource, getApplication<Application>().resources) }
       .let { observations.addAll(it) }
     return observations
   }
@@ -74,7 +74,7 @@ class PatientDetailsViewModel(
     fhirEngine
       .search<Condition> { filter(Condition.SUBJECT, { value = "Patient/$patientId" }) }
       .take(MAX_RESOURCE_COUNT)
-      .map { createConditionItem(it, getApplication<Application>().resources) }
+      .map { createConditionItem(it.resource, getApplication<Application>().resources) }
       .let { conditions.addAll(it) }
     return conditions
   }
