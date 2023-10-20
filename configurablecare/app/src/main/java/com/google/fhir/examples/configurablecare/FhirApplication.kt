@@ -18,7 +18,6 @@ package com.google.fhir.examples.configurablecare
 import android.app.Application
 import android.content.Context
 import ca.uhn.fhir.context.FhirContext
-import com.google.android.fhir.BuildConfig
 import com.google.android.fhir.DatabaseErrorStrategy.RECREATE_AT_OPEN
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.FhirEngineConfiguration
@@ -71,7 +70,7 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
       DataCaptureConfig().apply {
         urlResolver = ReferenceUrlResolver(this@FhirApplication as Context)
         valueSetResolverExternal = object : ValueSetResolver() {}
-        xFhirQueryResolver = XFhirQueryResolver { fhirEngine.search(it) }
+        xFhirQueryResolver = XFhirQueryResolver { fhirEngine.search(it).map { it.resource } }
       }
     ValueSetResolver.init(this@FhirApplication)
   }

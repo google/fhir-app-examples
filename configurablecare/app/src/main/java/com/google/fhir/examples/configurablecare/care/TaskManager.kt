@@ -111,7 +111,7 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
           { value = of(task.focus.reference.substring("Questionnaire/".length)) }
         )
       }
-    return questionnaires.firstOrNull()
+    return questionnaires.firstOrNull()?.resource
   }
 
   /** Fetch all Tasks for a given Patient */
@@ -120,16 +120,18 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     extraFilter: (Search.() -> Unit)?,
     sort: (Search.() -> Unit)?
   ): List<Task> {
-    return fhirEngine.search {
-      filter(Task.SUBJECT, { value = "Patient/$patientId" })
-      if (extraFilter != null) {
-        extraFilter()
+    return fhirEngine
+      .search<Task> {
+        filter(Task.SUBJECT, { value = "Patient/$patientId" })
+        if (extraFilter != null) {
+          extraFilter()
+        }
+        operation = Operation.AND
+        if (sort != null) {
+          sort()
+        }
       }
-      operation = Operation.AND
-      if (sort != null) {
-        sort()
-      }
-    }
+      .map { it.resource }
   }
 
   /** Populate the requester field in the given [Task] */
