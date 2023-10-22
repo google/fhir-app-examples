@@ -137,10 +137,9 @@ class CarePlanManager(
     val carePlanProposal =
       fhirOperator.generateCarePlan(
         planDefinition =
-      CanonicalType("http://localhost/PlanDefinition/PlanDefinitionCancerScreening"),
+          CanonicalType("http://localhost/PlanDefinition/PlanDefinitionCancerScreening"),
         subject = "Patient/$patientId",
-        )
-        as CarePlan
+      ) as CarePlan
 
     // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
     val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
@@ -173,8 +172,8 @@ class CarePlanManager(
       val carePlanProposal =
         fhirOperator.generateCarePlan(
           planDefinitionId = planDefinitionId,
-          subject = "Patient/$patientId",)
-          as CarePlan
+          subject = "Patient/$patientId",
+        ) as CarePlan
 
       // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
       val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)

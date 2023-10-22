@@ -119,18 +119,19 @@ class TaskManager(private var fhirEngine: FhirEngine) : RequestResourceManager<T
     patientId: String,
     extraFilter: (Search.() -> Unit)?,
     sort: (Search.() -> Unit)?
-  ): List<Task> {    return fhirEngine
-    .search<Task> {
-      filter(Task.SUBJECT, { value = "Patient/$patientId" })
-      if (extraFilter != null) {
-        extraFilter()
+  ): List<Task> {
+    return fhirEngine
+      .search<Task> {
+        filter(Task.SUBJECT, { value = "Patient/$patientId" })
+        if (extraFilter != null) {
+          extraFilter()
+        }
+        operation = Operation.AND
+        if (sort != null) {
+          sort()
+        }
       }
-      operation = Operation.AND
-      if (sort != null) {
-        sort()
-      }
-    }
-    .map { it.resource }
+      .map { it.resource }
   }
 
   /** Populate the requester field in the given [Task] */

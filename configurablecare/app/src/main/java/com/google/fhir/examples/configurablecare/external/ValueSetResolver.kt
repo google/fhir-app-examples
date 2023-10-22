@@ -34,7 +34,8 @@ abstract class ValueSetResolver : ExternalAnswerValueSetResolver {
 
     private suspend fun fetchValueSetFromDb(uri: String): List<Coding> {
 
-      val valueSets = fhirEngine.search<ValueSet> { filter(ValueSet.URL, { value = uri }) }.map { it.resource }
+      val valueSets =
+        fhirEngine.search<ValueSet> { filter(ValueSet.URL, { value = uri }) }.map { it.resource }
 
       if (valueSets.isEmpty())
         return listOf(Coding().apply { display = "No referral facility available." })
