@@ -65,7 +65,8 @@ class HomeFragment : Fragment() {
     val adapter =
       ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_dropdown_item)
     careConfiguration.supportedImplementationGuides.forEach {
-      adapter.add(it.implementationGuideConfig.entryPoint.substring("PlanDefinition/".length))
+      val entryPointUri = it.implementationGuideConfig.entryPoint
+      adapter.add(entryPointUri.substringAfterLast('/'))
     }
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
     igSpinner.adapter = adapter
@@ -74,7 +75,13 @@ class HomeFragment : Fragment() {
       object : AdapterView.OnItemSelectedListener {
         override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
           if (p0 != null) {
-            workflowExecutionViewModel.currentPlanDefinitionId = p0.getItemAtPosition(p2) as String
+            val selectedPlanDefinitionId = p0.getItemAtPosition(p2) as String
+            workflowExecutionViewModel.currentPlanDefinitionId =
+              careConfiguration.supportedImplementationGuides.first {
+                it.implementationGuideConfig.entryPoint.contains(
+                  selectedPlanDefinitionId
+                )
+              }.implementationGuideConfig.entryPoint
             workflowExecutionViewModel.setActiveRequestResourceConfiguration(
               workflowExecutionViewModel.currentPlanDefinitionId
             )
