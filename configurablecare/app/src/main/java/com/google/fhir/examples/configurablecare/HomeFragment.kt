@@ -77,11 +77,11 @@ class HomeFragment : Fragment() {
           if (p0 != null) {
             val selectedPlanDefinitionId = p0.getItemAtPosition(p2) as String
             workflowExecutionViewModel.currentPlanDefinitionId =
-              careConfiguration.supportedImplementationGuides.first {
-                it.implementationGuideConfig.entryPoint.contains(
-                  selectedPlanDefinitionId
-                )
-              }.implementationGuideConfig.entryPoint
+              careConfiguration.supportedImplementationGuides
+                .first {
+                  it.implementationGuideConfig.entryPoint.contains(selectedPlanDefinitionId)
+                }
+                .implementationGuideConfig.entryPoint
             workflowExecutionViewModel.setActiveRequestResourceConfiguration(
               workflowExecutionViewModel.currentPlanDefinitionId
             )
