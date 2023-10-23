@@ -16,7 +16,7 @@
 package com.google.fhir.examples.configurablecare.data
 
 import com.google.android.fhir.sync.DownloadWorkManager
-import com.google.android.fhir.sync.Request
+import com.google.android.fhir.sync.download.DownloadRequest
 import com.google.fhir.examples.configurablecare.DemoDataStore
 import com.google.fhir.examples.configurablecare.care.CarePlanManager
 import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getCareConfigurationResources
@@ -76,7 +76,7 @@ class TimestampBasedDownloadWorkManagerImpl(
       )
     )
 
-  override suspend fun getNextRequest(): Request? {
+  override suspend fun getNextRequest(): DownloadRequest? {
     var url = urls.poll()
     return if (url == null) {
       constructNextRequestFromResourceReferences()
@@ -86,11 +86,11 @@ class TimestampBasedDownloadWorkManagerImpl(
       dataStore.getLastUpdateTimestamp(resourceTypeToDownload)?.let {
         url = affixLastUpdatedTimestamp(url, it)
       }
-      Request.of(url)
+      DownloadRequest.of(url)
     }
   }
 
-  private fun constructNextRequestFromResourceReferences(): Request? {
+  private fun constructNextRequestFromResourceReferences(): DownloadRequest? {
     for (resourceType in resourceReferencesDownloadOrderByTypeSequence) {
       if (resourceReferences.getOrDefault(resourceType, emptyMap()).isNotEmpty()) {
         val resourceSearchValues = resourceReferences[resourceType]!!
@@ -115,9 +115,9 @@ class TimestampBasedDownloadWorkManagerImpl(
     resourceType: ResourceType,
     searchField: String,
     resourceIds: Set<String>
-  ): Request? {
+  ): DownloadRequest? {
     return if (resourceIds.isNotEmpty()) {
-      Request.of("${resourceType.name}?$searchField=${resourceIds.joinToString(",")}")
+      DownloadRequest.of("${resourceType.name}?$searchField=${resourceIds.joinToString(",")}")
     } else {
       null
     }

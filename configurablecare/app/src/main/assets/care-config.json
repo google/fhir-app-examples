@@ -5,7 +5,7 @@
       "carePlanPolicy": "ACCEPT_ALL",
       "implementationGuideConfig": {
         "implementationGuideId": "ImplementationGuide/NCDScreening",
-        "entryPoint": "PlanDefinition/NCD-Screening-Plan-Definition",
+        "entryPoint": "http://localhost/PlanDefinition/PlanDefinitionAdultPatient",
         "requestResourceConfigurations": [
           {
             "resourceType": "Task",
@@ -38,7 +38,7 @@
       "carePlanPolicy": "ACCEPT_ALL",
       "implementationGuideConfig": {
         "implementationGuideId": "ImplementationGuide/CancerScreening",
-        "entryPoint": "PlanDefinition/Cancer-Screening-Plan-Definition",
+        "entryPoint": "http://localhost/PlanDefinition/RiskAssessment-Cancer",
         "requestResourceConfigurations": [
           {
             "resourceType": "Task",

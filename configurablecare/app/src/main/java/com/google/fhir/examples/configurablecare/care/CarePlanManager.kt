@@ -21,7 +21,7 @@ import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
-import com.google.android.fhir.workflow.FhirOperatorBuilder
+import com.google.android.fhir.workflow.FhirOperator
 import java.io.File
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CanonicalType
@@ -43,12 +43,12 @@ class CarePlanManager(
   fhirContext: FhirContext,
   private val context: Context,
 ) {
-  private var knowledgeManager = KnowledgeManager.createInMemory(context)
+  private var knowledgeManager = KnowledgeManager.create(context, inMemory = true)
   private var fhirOperator =
-    FhirOperatorBuilder(context.applicationContext)
-      .withFhirContext(fhirContext)
-      .withFhirEngine(fhirEngine)
-      .withIgManager(knowledgeManager)
+    FhirOperator.Builder(context.applicationContext)
+      .fhirContext(fhirContext)
+      .fhirEngine(fhirEngine)
+      .knowledgeManager(knowledgeManager)
       .build()
 
   private var taskManager: RequestResourceManager<Task> = TaskManager(fhirEngine)
@@ -80,6 +80,7 @@ class CarePlanManager(
   ): Collection<Resource> {
     var bundleCollection: Collection<Resource> = mutableListOf()
 
+    knowledgeManager.install(writeToFile(planDefinition))
     for (resource in planDefinition.contained) {
       if (resource is Bundle) {
         for (entry in resource.entry) {
@@ -103,8 +104,8 @@ class CarePlanManager(
    */
   private suspend fun loadCarePlanResourcesFromDb() {
     // Load Library resources
-    val availableCqlLibraries = fhirEngine.search<Library> {}
-    val availablePlanDefinitions = fhirEngine.search<PlanDefinition> {}
+    val availableCqlLibraries = fhirEngine.search<Library> {}.map { it.resource }
+    val availablePlanDefinitions = fhirEngine.search<PlanDefinition> {}.map { it.resource }
     for (cqlLibrary in availableCqlLibraries) {
       knowledgeManager.install(writeToFile(cqlLibrary))
       cqlLibraryIdList.add(IdType(cqlLibrary.id).idPart)
@@ -135,8 +136,10 @@ class CarePlanManager(
     }
 
     val carePlanProposal =
-      fhirOperator.generateCarePlan(planDefinitionId = planDefinitionId, patientId = patientId)
-        as CarePlan
+      fhirOperator.generateCarePlan(
+        planDefinition = CanonicalType(planDefinitionId),
+        subject = "Patient/$patientId",
+      ) as CarePlan
 
     // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
     val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
@@ -167,8 +170,10 @@ class CarePlanManager(
       val patientId = IdType(patient.id).idPart
 
       val carePlanProposal =
-        fhirOperator.generateCarePlan(planDefinitionId = planDefinitionId, patientId = patientId)
-          as CarePlan
+        fhirOperator.generateCarePlan(
+          planDefinitionId = planDefinitionId,
+          subject = "Patient/$patientId",
+        ) as CarePlan
 
       // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
       val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)

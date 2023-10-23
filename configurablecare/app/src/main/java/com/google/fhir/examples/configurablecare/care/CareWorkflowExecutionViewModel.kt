@@ -121,11 +121,11 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
     }
   }
 
-  fun setActiveRequestResourceConfiguration(planDefinitionId: String) {
+  fun setActiveRequestResourceConfiguration(planDefinitionUrl: String) {
     activeRequestResourceConfiguration =
       ConfigurationManager.careConfiguration
         ?.supportedImplementationGuides
-        ?.firstOrNull { it.implementationGuideConfig.entryPoint.contains(planDefinitionId) }
+        ?.firstOrNull { it.implementationGuideConfig.entryPoint == planDefinitionUrl }
         ?.implementationGuideConfig
         ?.requestResourceConfigurations!!
   }
