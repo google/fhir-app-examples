@@ -22,43 +22,31 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
-import ca.uhn.fhir.parser.IParser
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.care.TaskManager
 import com.google.fhir.examples.configurablecare.util.TransformSupportServicesMatchBox
-import com.google.android.fhir.datacapture.mapping.ResourceMapper
-import com.google.android.fhir.datacapture.mapping.StructureMapExtractionContext
 import com.google.android.fhir.datacapture.validation.Invalid
 import com.google.android.fhir.datacapture.validation.QuestionnaireResponseValidator
 import com.google.android.fhir.get
-import com.google.android.fhir.search.search
 import com.google.android.fhir.testing.jsonParser
+import com.google.fhir.examples.configurablecare.util.CustomResourceMapper
 import java.io.File
 import java.time.Instant
 import java.time.Period
 import java.util.Date
 import java.util.UUID
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.hl7.fhir.exceptions.FHIRException
 import org.hl7.fhir.r4.model.Base
 import org.hl7.fhir.r4.model.Bundle
-import org.hl7.fhir.r4.model.Coding
 import org.hl7.fhir.r4.model.DateType
 import org.hl7.fhir.r4.model.IdType
-import org.hl7.fhir.r4.model.Immunization
 import org.hl7.fhir.r4.model.Observation
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.QuestionnaireResponse
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.Resource
-import org.hl7.fhir.r4.model.ResourceFactory
-import org.hl7.fhir.r4.model.ResourceType
-import org.hl7.fhir.r4.model.StructureDefinition
 import org.hl7.fhir.r4.model.StructureMap
 import org.hl7.fhir.r4.model.Task
-import org.hl7.fhir.r4.terminologies.ConceptMapEngine
 import org.hl7.fhir.r4.utils.StructureMapUtilities
 
 
@@ -102,7 +90,7 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
 
       if (structureMapId.isEmpty()) {  // no structure map needed
         println(" Structure map is empty")
-        val bundle = ResourceMapper.extract(questionnaireResource, questionnaireResponse)
+        val bundle = CustomResourceMapper.extract(questionnaireResource, questionnaireResponse)
         var flag = false
         var patient: Patient
 

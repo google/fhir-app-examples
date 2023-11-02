@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 <resources>
-    <string name="app_name">User App</string>
+    <string name="app_name">Configurable Care</string>
 
     <string name="title_patient_list">Patient List</string>
     <string name="title_patient_detail">SamplePatient Detail</string>

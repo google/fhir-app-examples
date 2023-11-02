@@ -14,7 +14,7 @@ android {
   compileSdk = 33
   defaultConfig {
     applicationId = "com.google.fhir.examples.configurablecare"
-    minSdk = 24
+    minSdk = 28
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     manifestPlaceholders["appAuthRedirectScheme"] = applicationId!!
     buildFeatures.buildConfig = true

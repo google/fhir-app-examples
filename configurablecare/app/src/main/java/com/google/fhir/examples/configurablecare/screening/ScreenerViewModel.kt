@@ -24,12 +24,11 @@ import androidx.lifecycle.viewModelScope
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
-import com.google.android.fhir.datacapture.mapping.ResourceMapper
+import com.google.fhir.examples.configurablecare.util.CustomResourceMapper
 import com.google.fhir.examples.configurablecare.FhirApplication
 import com.google.fhir.examples.configurablecare.care.RequestConfiguration
 import com.google.fhir.examples.configurablecare.care.RequestManager
 import com.google.fhir.examples.configurablecare.care.TaskManager
-import com.google.fhir.examples.configurablecare.care.TestRequestHandler
 import com.google.fhir.examples.configurablecare.util.TransformSupportServicesMatchBox
 import com.google.android.fhir.get
 import com.google.android.fhir.testing.jsonParser
@@ -40,7 +39,6 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 import org.hl7.fhir.r4.model.Base
 import org.hl7.fhir.r4.model.Bundle
-import org.hl7.fhir.r4.model.Coding
 import org.hl7.fhir.r4.model.Condition
 import org.hl7.fhir.r4.model.DateType
 import org.hl7.fhir.r4.model.Encounter
@@ -93,7 +91,7 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
       if (structureMapId.isEmpty()) { // no structure map needed
         println(" Structure map is empty")
 
-        val bundle = ResourceMapper.extract(questionnaireResource, questionnaireResponse)
+        val bundle = CustomResourceMapper.extract(questionnaireResource, questionnaireResponse)
 
         if (questionnaireResource.id.contains("ProposalApproval")) {
           if (baseRequest.resourceType == "MedicationRequest") {
