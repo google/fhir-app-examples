@@ -86,6 +86,7 @@ class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, St
   }
 
   private fun onTaskItemClicked(taskItem: ListScreeningsViewModel.TaskItem) {
+    careWorkflowExecutionViewModel.selectedRequestItem = taskItem
     navigateToQuestionnaireCallback(
       taskItem.resourceId,
       viewModel.fetchQuestionnaireString(taskItem)

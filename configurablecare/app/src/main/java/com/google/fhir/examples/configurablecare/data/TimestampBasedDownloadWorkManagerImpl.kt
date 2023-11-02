@@ -16,7 +16,7 @@
 package com.google.fhir.examples.configurablecare.data
 
 import com.google.android.fhir.sync.DownloadWorkManager
-import com.google.android.fhir.sync.Request
+import com.google.android.fhir.sync.download.DownloadRequest
 import com.google.fhir.examples.configurablecare.DemoDataStore
 import com.google.fhir.examples.configurablecare.care.CarePlanManager
 import com.google.fhir.examples.configurablecare.care.ConfigurationManager.getCareConfigurationResources
@@ -26,9 +26,11 @@ import java.util.Date
 import java.util.LinkedList
 import java.util.Locale
 import org.hl7.fhir.exceptions.FHIRException
+import org.hl7.fhir.r4.model.ActivityDefinition
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.Encounter
+import org.hl7.fhir.r4.model.Library
 import org.hl7.fhir.r4.model.OperationOutcome
 import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Reference
@@ -72,11 +74,23 @@ class TimestampBasedDownloadWorkManagerImpl(
         // Server should fetch the PractitionerRole corresponding to the health Professional
         "PractitionerRole",
         // Server should filter all the patients the Health Professional is assigned to
-        "Patient"
+        "Patient",
+        // "Observation",
+        "MedicationRequest",
+        "Questionnaire",
+        // "ValueSet",
+        // "StructureDefinition",
+        // "StructureMap",
+        "Task",
+        "ActivityDefinition",
+        "Library",
+        // "ValueSet"
       )
     )
 
-  override suspend fun getNextRequest(): Request? {
+  private val downloadFlag = false
+
+  override suspend fun getNextRequest(): DownloadRequest? {
     var url = urls.poll()
     return if (url == null) {
       constructNextRequestFromResourceReferences()
@@ -86,11 +100,11 @@ class TimestampBasedDownloadWorkManagerImpl(
       dataStore.getLastUpdateTimestamp(resourceTypeToDownload)?.let {
         url = affixLastUpdatedTimestamp(url, it)
       }
-      Request.of(url)
+      DownloadRequest.of(url)
     }
   }
 
-  private fun constructNextRequestFromResourceReferences(): Request? {
+  private fun constructNextRequestFromResourceReferences(): DownloadRequest? {
     for (resourceType in resourceReferencesDownloadOrderByTypeSequence) {
       if (resourceReferences.getOrDefault(resourceType, emptyMap()).isNotEmpty()) {
         val resourceSearchValues = resourceReferences[resourceType]!!
@@ -115,9 +129,9 @@ class TimestampBasedDownloadWorkManagerImpl(
     resourceType: ResourceType,
     searchField: String,
     resourceIds: Set<String>
-  ): Request? {
+  ): DownloadRequest? {
     return if (resourceIds.isNotEmpty()) {
-      Request.of("${resourceType.name}?$searchField=${resourceIds.joinToString(",")}")
+      DownloadRequest.of("${resourceType.name}?$searchField=${resourceIds.joinToString(",")}")
     } else {
       null
     }
@@ -163,6 +177,8 @@ class TimestampBasedDownloadWorkManagerImpl(
       is PlanDefinition -> return extractPlanDefinitionDependentResources(resource)
       is CarePlan -> return extractCarePlanDependentResources(resource)
       is Encounter -> return addEncounterRelatedResources(resource)
+      // is Library -> return carePlanManager.installKnowledgeResource(resource)
+      // is ActivityDefinition -> return carePlanManager.installKnowledgeResource(resource)
     }
     return emptyList()
   }

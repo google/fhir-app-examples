@@ -29,6 +29,10 @@ import androidx.navigation.fragment.NavHostFragment
 import com.google.android.fhir.datacapture.QuestionnaireFragment
 import com.google.android.material.snackbar.Snackbar
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
+import com.google.android.fhir.testing.jsonParser
+import kotlinx.coroutines.runBlocking
+import org.hl7.fhir.r4.model.IdType
+import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.QuestionnaireResponse
 
 /** A fragment class to show patient registration screen. */
@@ -81,6 +85,13 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
   }
 
   private fun addQuestionnaireFragment() {
+    runBlocking {
+      viewModel.questionnaire =
+        careWorkflowExecutionViewModel.getActivePatientRegistrationQuestionnaire()
+      careWorkflowExecutionViewModel.setCurrentStructureMap()
+      viewModel.structureMapId = careWorkflowExecutionViewModel.currentStructureMapId
+      viewModel.currentTargetResourceType = careWorkflowExecutionViewModel.currentTargetResourceType
+    }
     childFragmentManager.commit {
       add(
         R.id.add_patient_container,
@@ -117,7 +128,9 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
           Snackbar.LENGTH_SHORT
         )
         .show()
-      // workflow execution in mainActivityViewModel is necessary
+
+      val questionnaireId = IdType((jsonParser.parseResource(viewModel.questionnaire) as Questionnaire).id).idPart
+      careWorkflowExecutionViewModel.setPlanDefinitionId("Questionnaire/${questionnaireId}")
       careWorkflowExecutionViewModel.executeCareWorkflowForPatient(it)
       NavHostFragment.findNavController(this)
         .previousBackStackEntry

@@ -22,8 +22,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.google.fhir.examples.configurablecare.FhirApplication
 import kotlinx.coroutines.launch
+import org.hl7.fhir.r4.model.MedicationRequest
 import org.hl7.fhir.r4.model.Patient
+import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
+import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.model.Task.TaskStatus
 
@@ -33,21 +36,50 @@ class TaskViewPagerViewModel(application: Application, private val state: SavedS
   val liveCompletedTasksCount = MutableLiveData<Int>()
   val patientName = MutableLiveData<String>()
 
-  private val taskManager =
-    FhirApplication.taskManager(getApplication<Application>().applicationContext)
+  private val requestManager =
+    FhirApplication.requestManager(getApplication<Application>().applicationContext)
   private val fhirEngine =
     FhirApplication.fhirEngine(getApplication<Application>().applicationContext)
 
   fun getTasksCount(patientId: String) {
     viewModelScope.launch {
       livePendingTasksCount.value =
-        taskManager.getTasksCount(patientId) {
-          filter(Task.STATUS, { value = of(getTaskStatus(0)) })
-        }!!
-      liveCompletedTasksCount.value =
-        taskManager.getTasksCount(patientId) {
-          filter(Task.STATUS, { value = of(getTaskStatus(1)) })
-        }!!
+        requestManager.getRequestsCount(patientId, status = "draft") + requestManager.getRequestsCount(patientId, status = "active") + requestManager.getRequestsCount(patientId, status = "on-hold")
+
+      val liveCompletedTasks = requestManager.getAllRequestsForPatient(patientId, "completed") + requestManager.getAllRequestsForPatient(patientId, "cancelled") + requestManager.getAllRequestsForPatient(patientId, "stopped")
+
+      val orders: MutableList<Resource> = mutableListOf()
+      val plans: MutableList<Resource> = mutableListOf()
+      val proposals: MutableList<Resource> = mutableListOf()
+      val miscRequests: MutableList<Resource> = mutableListOf()
+      for (request in liveCompletedTasks) {
+        if (request is ServiceRequest || request is Task) {
+          miscRequests.add(request)
+        } else if (request is MedicationRequest) {
+          if (request.intent == MedicationRequest.MedicationRequestIntent.ORDER) {
+            orders.add(request)
+          }
+        }
+      }
+      for (request in liveCompletedTasks) {
+        if (request is MedicationRequest) {
+          if (request.intent == MedicationRequest.MedicationRequestIntent.PLAN && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || orders.size == 0)) {
+            plans.add(request)
+          }
+        }
+      }
+      for (request in liveCompletedTasks) {
+        if (request is MedicationRequest) {
+          if (request.intent == MedicationRequest.MedicationRequestIntent.PROPOSAL && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || (orders.size == 0 && plans.size == 0))) {
+            proposals.add(request)
+          }
+        }
+      }
+      val requests = orders + proposals + plans + miscRequests
+      liveCompletedTasksCount.value = requests.size
+
+      // liveCompletedTasksCount.value =
+      //   requestManager.getRequestsCount(patientId, status = "completed") + requestManager.getRequestsCount(patientId, status = "cancelled") + requestManager.getRequestsCount(patientId, status = "stopped")
     }
   }
 
@@ -63,6 +95,14 @@ class TaskViewPagerViewModel(application: Application, private val state: SavedS
    * could be extended.
    */
   fun getTaskStatus(position: Int): String {
+    return when (position) {
+      0 -> TaskStatus.DRAFT
+      1 -> TaskStatus.COMPLETED
+      else -> TaskStatus.READY
+    }.toCode()
+  }
+
+  fun getRequestResourceType(position: Int): String {
     return when (position) {
       0 -> TaskStatus.READY
       1 -> TaskStatus.COMPLETED

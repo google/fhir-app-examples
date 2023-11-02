@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.android.fhir.FhirEngine
+import com.google.fhir.examples.configurablecare.FhirApplication
 import com.google.android.fhir.search.Order
 import com.google.android.fhir.search.StringFilterModifier
 import com.google.android.fhir.search.count
@@ -40,8 +41,8 @@ import org.hl7.fhir.r4.model.Task
 class PatientListViewModel(application: Application, private val fhirEngine: FhirEngine) :
   AndroidViewModel(application) {
 
-  private val taskManager =
-    FhirApplication.taskManager(getApplication<Application>().applicationContext)
+  private val requestManager =
+    FhirApplication.requestManager(getApplication<Application>().applicationContext)
 
   val liveSearchedPatients = MutableLiveData<List<PatientItem>>()
   val patientCount = MutableLiveData<Long>()
@@ -105,20 +106,18 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
         from = 0
       }
       .mapIndexed { index, fhirPatient ->
-        fhirPatient.toPatientItem(index + 1).apply {
+        fhirPatient.resource.toPatientItem(index + 1).apply {
           pendingTasksCount =
-            taskManager.getTasksCount(resourceId) {
-              filter(Task.STATUS, { value = of(getTaskStatus(0)) })
-            }!!
+            requestManager.getRequestsCount(resourceId, status = "draft")
         }
       }
       .sortedByDescending { it.pendingTasksCount }
       .let { patients.addAll(it) }
 
     val risks = getRiskAssessments()
-    patients.forEach { patient ->
+    patients.forEach { patient ->patient.risk = "No risk"
       risks["Patient/${patient.resourceId}"]?.let {
-        patient.risk = it.prediction?.first()?.qualitativeRisk?.coding?.first()?.code
+        patient.risk = "No risk" // it.prediction?.first()?.qualitativeRisk?.coding?.first()?.code
       }
     }
     return patients
@@ -127,12 +126,12 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
   private suspend fun getRiskAssessments(): Map<String, RiskAssessment?> {
     return fhirEngine
       .search<RiskAssessment> {}
-      .groupBy { it.subject.reference }
+      .groupBy { it.resource.subject.reference }
       .mapValues { entry ->
         entry.value
-          .filter { it.hasOccurrence() }
-          .sortedByDescending { it.occurrenceDateTimeType.value }
-          .firstOrNull()
+          .filter { it.resource.hasOccurrence() }
+          .maxByOrNull { it.resource.occurrenceDateTimeType.value }
+          ?.resource
       }
   }
 

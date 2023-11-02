@@ -15,12 +15,18 @@
  */
 package com.google.fhir.examples.configurablecare.care
 
+import android.app.Application
 import android.content.Context
+import android.os.Environment
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.gson.Gson
 import com.google.gson.JsonArray
+import java.io.File
+import org.hl7.fhir.r4.model.Bundle
+import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Resource
+import org.hl7.fhir.r4.model.StructureMap
 
 data class RequestResourceConfig(
   var resourceType: String,
@@ -31,12 +37,31 @@ data class RequestResourceConfig(
   data class Value(var field: String, var value: String)
 }
 
+data class RequestConfiguration(
+  var requestType: String,
+  var intentConditions: List<IntentCondition>
+) {
+  data class IntentCondition(var intent: String, var action: String, var condition: String)
+}
+
+
 class ImplementationGuideConfig(
   var implementationGuideId: String,
+  var patientRegistrationQuestionnaire: String,
   var entryPoint: String,
   var requestResourceConfigurations: List<RequestResourceConfig>,
-  var supportedValueSets: JsonArray
+  var requestConfigurations: List<RequestConfiguration>,
+  var supportedValueSets: JsonArray,
+  var triggers: List<Trigger>
 )
+
+data class Trigger(
+  var event: String,
+  var planDefinition: String,
+  var structureMap: String,
+  var targetResourceType: String
+)
+
 
 data class SupportedImplementationGuide(
   var location: String,
