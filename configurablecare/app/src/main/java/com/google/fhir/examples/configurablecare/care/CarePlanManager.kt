@@ -126,6 +126,7 @@ class CarePlanManager(
   ): Collection<Resource> {
     var bundleCollection: Collection<Resource> = mutableListOf()
 
+    knowledgeManager.install(writeToFile(planDefinition))
     for (resource in planDefinition.contained) {
       if (resource is Bundle) {
         for (entry in resource.entry) {
@@ -175,7 +176,6 @@ class CarePlanManager(
     val carePlanProposal =
       fhirOperator.generateCarePlan(planDefinition = CanonicalType(planDefinitionUri), subject = "Patient/$patientId")
         as CarePlan
-
     println(jsonParser.encodeResourceToString(carePlanProposal))
 
     // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
@@ -183,6 +183,7 @@ class CarePlanManager(
 
     // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of record
     val resourceList = acceptCarePlan(carePlanProposal, requestConfiguration)
+
 
     // NOTE: This is a workaround until the CI PD works (dependent on SM extraction for CI Questionnaire)
     if (resourceList.isEmpty() && planDefinitionUri.contains("IMMZD2DTMeaslesCI")) {
