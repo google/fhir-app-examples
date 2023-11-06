@@ -58,10 +58,6 @@ Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 2. A questionnaire will open up that asks you whether you want to accept this proposal. Click on "No", provide a reason and submit.
 3. You will notice that all pending activities have been completed. In the completed activities section, the Medication Request activity is marked as cancelled due to rejection of the proposal.
 
-## Demo
-Watch the video below for a demo of the Configurable Care application using the sample FHIR data provided:
-
-https://github.com/MJ1998/fhir-app-examples/assets/112697704/1aa9e3ea-3a5e-4a25-8bb1-f62334a2c164
 
 ## Disclaimer
 This product is not intended to be a medical device.
