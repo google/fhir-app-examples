@@ -27,9 +27,9 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.fhir.datacapture.QuestionnaireFragment
+import com.google.android.fhir.testing.jsonParser
 import com.google.android.material.snackbar.Snackbar
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
-import com.google.android.fhir.testing.jsonParser
 import kotlinx.coroutines.runBlocking
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Questionnaire
@@ -129,8 +129,9 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
         )
         .show()
 
-      val questionnaireId = IdType((jsonParser.parseResource(viewModel.questionnaire) as Questionnaire).id).idPart
-      careWorkflowExecutionViewModel.setPlanDefinitionId("Questionnaire/${questionnaireId}")
+      val questionnaireId =
+        IdType((jsonParser.parseResource(viewModel.questionnaire) as Questionnaire).id).idPart
+      careWorkflowExecutionViewModel.setPlanDefinitionId("Questionnaire/$questionnaireId")
       careWorkflowExecutionViewModel.executeCareWorkflowForPatient(it)
       NavHostFragment.findNavController(this)
         .previousBackStackEntry

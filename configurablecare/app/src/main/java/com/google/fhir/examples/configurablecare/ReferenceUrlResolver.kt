@@ -18,7 +18,6 @@ package com.google.fhir.examples.configurablecare
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.google.fhir.examples.configurablecare.FhirApplication
 import com.google.android.fhir.datacapture.UrlResolver
 import com.google.android.fhir.get
 import org.hl7.fhir.r4.model.Binary

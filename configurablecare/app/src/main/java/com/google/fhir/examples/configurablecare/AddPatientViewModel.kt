@@ -23,12 +23,12 @@ import androidx.lifecycle.viewModelScope
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.util.TransformSupportServicesMatchBox
 import com.google.android.fhir.datacapture.validation.Invalid
 import com.google.android.fhir.datacapture.validation.QuestionnaireResponseValidator
 import com.google.android.fhir.get
 import com.google.android.fhir.testing.jsonParser
 import com.google.fhir.examples.configurablecare.util.CustomResourceMapper
+import com.google.fhir.examples.configurablecare.util.TransformSupportServicesMatchBox
 import java.io.File
 import java.time.Instant
 import java.time.Period
@@ -49,14 +49,13 @@ import org.hl7.fhir.r4.model.StructureMap
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.utils.StructureMapUtilities
 
-
 /** ViewModel for patient registration screen {@link AddPatientFragment}. */
 class AddPatientViewModel(application: Application, private val state: SavedStateHandle) :
   AndroidViewModel(application) {
 
   var questionnaire: String = ""
-    // get() = getQuestionnaireJson()
-    var savedPatient = MutableLiveData<Patient?>()
+  // get() = getQuestionnaireJson()
+  var savedPatient = MutableLiveData<Patient?>()
   var structureMapId: String = ""
   var currentTargetResourceType: String = ""
   val context = application.applicationContext
@@ -76,10 +75,10 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
   fun savePatient(questionnaireResponse: QuestionnaireResponse) {
     viewModelScope.launch {
       if (QuestionnaireResponseValidator.validateQuestionnaireResponse(
-          questionnaireResource,
-          questionnaireResponse,
-          getApplication()
-        )
+            questionnaireResource,
+            questionnaireResponse,
+            getApplication()
+          )
           .values
           .flatten()
           .any { it is Invalid }
@@ -88,7 +87,7 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
         return@launch
       }
 
-      if (structureMapId.isEmpty()) {  // no structure map needed
+      if (structureMapId.isEmpty()) { // no structure map needed
         println(" Structure map is empty")
         val bundle = CustomResourceMapper.extract(questionnaireResource, questionnaireResponse)
         var flag = false
@@ -104,16 +103,15 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
             flag = true
           }
         }
-        if (!flag)
-          return@launch
-
+        if (!flag) return@launch
       } else {
         println(" Structure map is: $structureMapId")
         println(" Target resource: $currentTargetResourceType")
         val outputFile =
           File(getApplication<Application>().externalCacheDir, "questionnaireResponse.json")
         outputFile.writeText(
-          FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
+          FhirContext.forCached(FhirVersionEnum.R4)
+            .newJsonParser()
             .encodeResourceToString(questionnaireResponse)
         )
 
@@ -126,23 +124,18 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
         }
 
         val outputs = mutableListOf<Base>()
-        val transformSupportServices =
-          TransformSupportServicesMatchBox(
-            contextR4,
-            outputs
-          )
+        val transformSupportServices = TransformSupportServicesMatchBox(contextR4, outputs)
         val structureMapUtilities = StructureMapUtilities(contextR4, transformSupportServices)
 
         val structureMap = fhirEngine.get<StructureMap>(IdType(structureMapId).idPart)
         val targetResource: Base =
-          if (currentTargetResourceType == "Patient")
-            Patient()
-          else
-            Bundle()
+          if (currentTargetResourceType == "Patient") Patient() else Bundle()
 
         val baseElement =
           jsonParser.parseResource(
-            QuestionnaireResponse::class.java, jsonParser.encodeResourceToString(questionnaireResponse))
+            QuestionnaireResponse::class.java,
+            jsonParser.encodeResourceToString(questionnaireResponse)
+          )
 
         println("QR: ${jsonParser.encodeResourceToString(baseElement)}")
 
@@ -160,7 +153,8 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
           var patient = Patient()
           val outputFile = File(getApplication<Application>().externalCacheDir, "bundle.json")
           outputFile.writeText(
-            FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
+            FhirContext.forCached(FhirVersionEnum.R4)
+              .newJsonParser()
               .encodeResourceToString(targetResource)
           )
 
@@ -179,8 +173,7 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
           }
           if (flag) {
             savedPatient.value = patient
-          }
-          else {
+          } else {
             savedPatient.value = null
           }
         } else if (targetResource is Resource) {
@@ -189,7 +182,8 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
           fhirEngine.create(targetResource)
 
           questionnaireResponse.id = UUID.randomUUID().toString()
-          questionnaireResponse.subject = Reference("${targetResource.resourceType}/${IdType(targetResource.id).idPart}")
+          questionnaireResponse.subject =
+            Reference("${targetResource.resourceType}/${IdType(targetResource.id).idPart}")
           println("QR: ${jsonParser.encodeResourceToString(questionnaireResponse)}")
           fhirEngine.create(questionnaireResponse)
 
@@ -198,22 +192,21 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
           savedPatient.value = if (targetResource is Patient) targetResource else null
         }
       }
-
     }
   }
 
   private suspend fun createImmunizationReviewTask(patientId: String) {
-    val task = Task().apply {
-      id = UUID.randomUUID().toString()
-      status = Task.TaskStatus.DRAFT
-      intent = Task.TaskIntent.PROPOSAL
-      description = "Immunization Review"
-      focus.reference = "Questionnaire/IMMZD1ClientHistoryMeasles"
-      `for`.reference ="Patient/${IdType(patientId).idPart}"
-      restriction.period.end = Date.from(Instant.now().plus(Period.ofDays(180)))
-    }
+    val task =
+      Task().apply {
+        id = UUID.randomUUID().toString()
+        status = Task.TaskStatus.DRAFT
+        intent = Task.TaskIntent.PROPOSAL
+        description = "Immunization Review"
+        focus.reference = "Questionnaire/IMMZD1ClientHistoryMeasles"
+        `for`.reference = "Patient/${IdType(patientId).idPart}"
+        restriction.period.end = Date.from(Instant.now().plus(Period.ofDays(180)))
+      }
     fhirEngine.create(task)
-
   }
 
   private fun readFileFromAssets(filename: String): String {

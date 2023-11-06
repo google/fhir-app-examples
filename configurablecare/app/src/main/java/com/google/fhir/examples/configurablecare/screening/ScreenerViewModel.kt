@@ -24,14 +24,13 @@ import androidx.lifecycle.viewModelScope
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.util.CustomResourceMapper
+import com.google.android.fhir.get
+import com.google.android.fhir.testing.jsonParser
 import com.google.fhir.examples.configurablecare.FhirApplication
 import com.google.fhir.examples.configurablecare.care.RequestConfiguration
 import com.google.fhir.examples.configurablecare.care.RequestManager
-import com.google.fhir.examples.configurablecare.care.TaskManager
+import com.google.fhir.examples.configurablecare.util.CustomResourceMapper
 import com.google.fhir.examples.configurablecare.util.TransformSupportServicesMatchBox
-import com.google.android.fhir.get
-import com.google.android.fhir.testing.jsonParser
 import java.io.File
 import java.time.Instant
 import java.util.Date
@@ -52,7 +51,6 @@ import org.hl7.fhir.r4.model.QuestionnaireResponse
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
-import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.StructureMap
 import org.hl7.fhir.r4.utils.StructureMapUtilities
 
@@ -73,8 +71,8 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
   var currentTargetResourceType: String = ""
   lateinit var baseRequest: ListScreeningsViewModel.TaskItem
   private var fhirEngine: FhirEngine = FhirApplication.fhirEngine(application.applicationContext)
-  private val taskManager: TaskManager = FhirApplication.taskManager(application.applicationContext)
-  private val requestManager: RequestManager = FhirApplication.requestManager(application.applicationContext)
+  private val requestManager: RequestManager =
+    FhirApplication.requestManager(application.applicationContext)
   private val _screenerState = MutableLiveData(ScreenerState())
   lateinit var requestConfiguration: List<RequestConfiguration>
   val screenerState: LiveData<ScreenerState>
@@ -87,7 +85,6 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
    */
   fun saveScreenerEncounter(questionnaireResponse: QuestionnaireResponse, patientId: String) {
     viewModelScope.launch {
-
       if (structureMapId.isEmpty()) { // no structure map needed
         println(" Structure map is empty")
 
@@ -95,16 +92,13 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
 
         if (questionnaireResource.id.contains("ProposalApproval")) {
           if (baseRequest.resourceType == "MedicationRequest") {
-            val baseMedicationRequest = fhirEngine.get<MedicationRequest>(IdType(baseRequest.resourceId).idPart)
+            val baseMedicationRequest =
+              fhirEngine.get<MedicationRequest>(IdType(baseRequest.resourceId).idPart)
             evaluateProposal(questionnaireResponse, baseMedicationRequest)
 
             _screenerState.value =
-              ScreenerState(
-                isResourceSaved = true,
-                encountersCreated = emptyList()
-              )
+              ScreenerState(isResourceSaved = true, encountersCreated = emptyList())
           }
-
         } else {
           val encounterId = generateUuid()
           if (isRequiredFieldMissing(bundle)) {
@@ -118,13 +112,13 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
               encountersCreated = listOf(Reference("Encounter/$encounterId"))
             )
         }
-
       } else {
         println(" Structure map is: $structureMapId")
         val outputFile =
           File(getApplication<Application>().externalCacheDir, "questionnaireResponse.json")
         outputFile.writeText(
-          FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
+          FhirContext.forCached(FhirVersionEnum.R4)
+            .newJsonParser()
             .encodeResourceToString(questionnaireResponse)
         )
 
@@ -137,26 +131,25 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
         }
 
         val outputs = mutableListOf<Base>()
-        val transformSupportServices =
-          TransformSupportServicesMatchBox(
-            contextR4,
-            outputs
-          )
+        val transformSupportServices = TransformSupportServicesMatchBox(contextR4, outputs)
         val structureMapUtilities = StructureMapUtilities(contextR4, transformSupportServices)
 
         val structureMap = fhirEngine.get<StructureMap>(IdType(structureMapId).idPart)
 
-        val targetResource: Base = if (currentTargetResourceType == "Patient")
-          Patient()
-        else Bundle()
+        val targetResource: Base =
+          if (currentTargetResourceType == "Patient") Patient() else Bundle()
 
         questionnaireResponse.id = UUID.randomUUID().toString()
         questionnaireResponse.subject = Reference("Patient/${IdType(patientId).idPart}")
-        println("QR before SM extraction: ${jsonParser.encodeResourceToString(questionnaireResponse)}")
+        println(
+          "QR before SM extraction: ${jsonParser.encodeResourceToString(questionnaireResponse)}"
+        )
 
         val baseElement =
           jsonParser.parseResource(
-            QuestionnaireResponse::class.java, jsonParser.encodeResourceToString(questionnaireResponse))
+            QuestionnaireResponse::class.java,
+            jsonParser.encodeResourceToString(questionnaireResponse)
+          )
 
         structureMapUtilities.transform(contextR4, baseElement, structureMap, targetResource)
 
@@ -178,10 +171,7 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
             fhirEngine.create(questionnaireResponse)
 
             _screenerState.value =
-              ScreenerState(
-                isResourceSaved = true,
-                encountersCreated = listOf(savedReference)
-              )
+              ScreenerState(isResourceSaved = true, encountersCreated = listOf(savedReference))
           } else {
             _screenerState.value = null
           }
@@ -198,11 +188,13 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
           _screenerState.value =
             ScreenerState(
               isResourceSaved = true,
-              encountersCreated = listOf(Reference("${targetResource.resourceType}/${IdType(targetResource.id).idPart}"))
+              encountersCreated =
+                listOf(
+                  Reference("${targetResource.resourceType}/${IdType(targetResource.id).idPart}")
+                )
             )
         }
       }
-
     }
   }
 
@@ -212,11 +204,22 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
   ) {
 
     val decision =
-      proposalQuestionnaireResponse.item.filter { it -> it.linkId == "approval-choice" }
-        .first().answer.first().valueBooleanType.value
+      proposalQuestionnaireResponse.item
+        .filter { it -> it.linkId == "approval-choice" }
+        .first()
+        .answer
+        .first()
+        .valueBooleanType.value
 
-    val reason = if (decision) "" else proposalQuestionnaireResponse.item.filter { it -> it.linkId == "reason" }
-      .first().answer.first().valueStringType.value
+    val reason =
+      if (decision) ""
+      else
+        proposalQuestionnaireResponse.item
+          .filter { it -> it.linkId == "reason" }
+          .first()
+          .answer
+          .first()
+          .valueStringType.value
 
     when (proposedRequest) {
       is MedicationRequest -> {
@@ -232,7 +235,6 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
           println("Proposal Rejected because: $reason")
         }
       }
-
       else -> {}
     }
   }
@@ -243,11 +245,7 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
     }
   }
 
-  private suspend fun saveResources(
-    bundle: Bundle,
-    patientId: String,
-    encounterId: String
-  ) {
+  private suspend fun saveResources(bundle: Bundle, patientId: String, encounterId: String) {
     val encounterReference = Reference("Encounter/$encounterId")
     val subjectReference = Reference("Patient/$patientId")
     bundle.entry.forEach {
@@ -274,13 +272,20 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
           saveResourceToDatabase(resource)
         }
         is Immunization -> {
-          val medicationRequest = requestManager.getRequestsForPatient(
-            patientId,
-            ResourceType.MedicationRequest,
-            status = "draft", // "active",
-            intent = "order"
-          ).first() as MedicationRequest
-          requestManager.endOrder(medicationRequest, MedicationRequest.MedicationRequestStatus.COMPLETED, "Completed successfully")
+          val medicationRequest =
+            requestManager
+              .getRequestsForPatient(
+                patientId,
+                ResourceType.MedicationRequest,
+                status = "draft", // "active",
+                intent = "order"
+              )
+              .first() as MedicationRequest
+          requestManager.endOrder(
+            medicationRequest,
+            MedicationRequest.MedicationRequestStatus.COMPLETED,
+            "Completed successfully"
+          )
 
           resource.id = UUID.randomUUID().toString()
           resource.patient = subjectReference
@@ -292,32 +297,6 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
 
           fhirEngine.create(resource)
           fhirEngine.update(medicationRequest)
-        }
-        is ServiceRequest -> {
-          if (resource.hasPerformerType()) { // Empty ServiceRequest --> does not need to be saved
-            resource.subject = subjectReference
-            resource.status = ServiceRequest.ServiceRequestStatus.ACTIVE
-
-            // TODO: Use a different field in ServiceRequest to capture owner details
-            if (resource.category.isNotEmpty()) {
-              resource.requester.reference = resource.category.first().coding.first().code
-              resource.requester.display = resource.category.first().coding.first().display
-            } else resource.requester = null
-
-            // Create a tracking task
-            // Create UUID for linking the tracking Task to this resource
-            val serviceRequestId = generateUuid()
-            resource.id = serviceRequestId
-            saveResourceToDatabase(resource)
-            val task =
-              taskManager.createTrackingTaskForServiceRequest(
-                resource,
-                subjectReference,
-                questionnaireResource.description,
-                requestConfiguration.firstOrNull { it.requestType == "ServiceRequest" }!!
-              )
-            saveResourceToDatabase(task)
-          }
         }
       }
     }

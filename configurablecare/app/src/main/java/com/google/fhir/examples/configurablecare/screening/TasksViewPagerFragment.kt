@@ -70,7 +70,7 @@ class TasksViewPagerFragment : Fragment() {
           arguments =
             bundleOf(
               ListTasksFragment.PATIENT_ID_KEY to args.patientId,
-              ListTasksFragment.TASK_STATUS to taskViewPagerViewModel.getTaskStatus(it)
+              ListTasksFragment.TASK_STATUS to taskViewPagerViewModel.getActivityStatus(it)
             )
         }
       }
@@ -97,10 +97,10 @@ class TasksViewPagerFragment : Fragment() {
         tab.text = tasksTabHeadings[position]
       }
       .attach()
-    taskViewPagerViewModel.livePendingTasksCount.observe(viewLifecycleOwner) {
+    taskViewPagerViewModel.livePendingActivitiesCount.observe(viewLifecycleOwner) {
       binding.tasksTabLayout.getTabAt(0)?.text = "Pending Activities ($it)"
     }
-    taskViewPagerViewModel.liveCompletedTasksCount.observe(viewLifecycleOwner) {
+    taskViewPagerViewModel.liveCompletedActivitiesCount.observe(viewLifecycleOwner) {
       binding.tasksTabLayout.getTabAt(1)?.text = "Completed Activities ($it)"
     }
     taskViewPagerViewModel.getTasksCount(args.patientId)

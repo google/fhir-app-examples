@@ -1,4 +1,4 @@
-package com.google.fhir.examples.configurablecare;
+package com.google.fhir.examples.configurablecare.util;
 
 import java.io.IOException;
 import java.util.ArrayList;

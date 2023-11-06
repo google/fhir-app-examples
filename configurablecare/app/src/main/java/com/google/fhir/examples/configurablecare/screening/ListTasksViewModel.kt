@@ -21,13 +21,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.context.FhirVersionEnum
-import com.google.android.fhir.search.Order
 import com.google.fhir.examples.configurablecare.FhirApplication
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.hl7.fhir.r4.model.MedicationRequest
 import org.hl7.fhir.r4.model.Resource
-import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.model.Task.TaskStatus
@@ -44,9 +42,15 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
     viewModelScope.launch {
       var requests: List<Resource> = mutableListOf()
       if (taskStatus == "draft") {
-        requests = requestManager.getAllRequestsForPatient(patientId, "draft") + requestManager.getAllRequestsForPatient(patientId, "active") + requestManager.getAllRequestsForPatient(patientId, "on-hold")
+        requests =
+          requestManager.getAllRequestsForPatient(patientId, "draft") +
+            requestManager.getAllRequestsForPatient(patientId, "active") +
+            requestManager.getAllRequestsForPatient(patientId, "on-hold")
       } else if (taskStatus == "completed") {
-        val allRequests = requestManager.getAllRequestsForPatient(patientId, "completed") + requestManager.getAllRequestsForPatient(patientId, "cancelled") + requestManager.getAllRequestsForPatient(patientId, "stopped")
+        val allRequests =
+          requestManager.getAllRequestsForPatient(patientId, "completed") +
+            requestManager.getAllRequestsForPatient(patientId, "cancelled") +
+            requestManager.getAllRequestsForPatient(patientId, "stopped")
 
         val orders: MutableList<Resource> = mutableListOf()
         val plans: MutableList<Resource> = mutableListOf()
@@ -63,14 +67,20 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
         }
         for (request in allRequests) {
           if (request is MedicationRequest) {
-            if (request.intent == MedicationRequest.MedicationRequestIntent.PLAN && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || orders.size == 0)) {
+            if (request.intent == MedicationRequest.MedicationRequestIntent.PLAN &&
+                (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED ||
+                  orders.size == 0)
+            ) {
               plans.add(request)
             }
           }
         }
         for (request in allRequests) {
           if (request is MedicationRequest) {
-            if (request.intent == MedicationRequest.MedicationRequestIntent.PROPOSAL && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || (orders.size == 0 && plans.size == 0))) {
+            if (request.intent == MedicationRequest.MedicationRequestIntent.PROPOSAL &&
+                (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED ||
+                  (orders.size == 0 && plans.size == 0))
+            ) {
               proposals.add(request)
             }
           }
@@ -83,19 +93,20 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
             if (fhirTask is Task) fhirTask.toTaskItem(index + 1)
             else if (fhirTask is MedicationRequest) fhirTask.toTaskItem(index + 1)
             else if (fhirTask is ServiceRequest) fhirTask.toTaskItem(index + 1)
-            else TaskItem(
-              id = (index + 1).toString(),
-              resourceType = "null",
-              resourceId = if (fhirTask.hasIdElement()) fhirTask.idElement.idPart else "",
-              description = "",
-              status = "no status",
-              intent = "no intent",
-              dueDate = "due date",
-              completedDate = "completed date",
-              owner = "null",
-              fhirResourceId = "",
-              clickable = false
-            )
+            else
+              TaskItem(
+                id = (index + 1).toString(),
+                resourceType = "null",
+                resourceId = if (fhirTask.hasIdElement()) fhirTask.idElement.idPart else "",
+                description = "",
+                status = "no status",
+                intent = "no intent",
+                dueDate = "due date",
+                completedDate = "completed date",
+                owner = "null",
+                fhirResourceId = "",
+                clickable = false
+              )
           }
     }
   }
@@ -120,7 +131,7 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
     val dueDate: String,
     val completedDate: String,
     val owner: String,
-    val fhirResourceId: String,  // resource to be opened
+    val fhirResourceId: String, // resource to be opened
     // for Questionnaire/456 - this should be "Questionnaire/456"
     val clickable: Boolean
   ) {
@@ -185,16 +196,26 @@ internal fun ServiceRequest.toTaskItem(position: Int): ListScreeningsViewModel.T
 
 internal fun MedicationRequest.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
   val taskResourceId = if (hasIdElement()) idElement.idPart else ""
-  val description = if (hasMedicationCodeableConcept() && medicationCodeableConcept.hasCoding()) "${medicationCodeableConcept.codingFirstRep.display} [$resourceType]" else ""
+  val description =
+    if (hasMedicationCodeableConcept() && medicationCodeableConcept.hasCoding())
+      "${medicationCodeableConcept.codingFirstRep.display} [$resourceType]"
+    else ""
   // status and intent are always present
   val taskStatus = status.toCode()
   val taskIntent = intent.toCode()
-  val dueDate = if (hasDispenseRequest() && dispenseRequest.hasValidityPeriod()) dispenseRequest.validityPeriod.start.toString() else if (doNotPerform) "Do Not Perform" else "unknown"
+  val dueDate =
+    if (hasDispenseRequest() && dispenseRequest.hasValidityPeriod())
+      dispenseRequest.validityPeriod.start.toString()
+    else if (doNotPerform) "Do Not Perform" else "unknown"
   val completedDate = if (hasMeta() && meta.hasLastUpdated()) meta.lastUpdated.toString() else ""
   val owner = ""
-  val fhirResourceId = if (hasSupportingInformation()) supportingInformation.first().reference else ""
-  val clickable = !(fhirResourceId == "" || taskStatus == "completed" || taskStatus == "cancelled" || taskStatus == "on-hold")
-
+  val fhirResourceId =
+    if (hasSupportingInformation()) supportingInformation.first().reference else ""
+  val clickable =
+    !(fhirResourceId == "" ||
+      taskStatus == "completed" ||
+      taskStatus == "cancelled" ||
+      taskStatus == "on-hold")
 
   return ListScreeningsViewModel.TaskItem(
     id = position.toString(),

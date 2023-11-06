@@ -1,11 +1,24 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.fhir.examples.configurablecare.care
 
 import ca.uhn.fhir.context.FhirContext
 import com.google.android.fhir.FhirEngine
 import com.google.android.fhir.get
 import com.google.android.fhir.search.search
-import com.google.fhir.examples.configurablecare.care.RequestHandler
-import com.google.fhir.examples.configurablecare.care.RequestUtils
 import java.lang.StringBuilder
 import java.time.Instant
 import java.util.Date
@@ -16,8 +29,8 @@ import org.hl7.fhir.r4.model.CommunicationRequest
 import org.hl7.fhir.r4.model.Enumerations.RequestResourceType
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.MedicationRequest
-import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestStatus
 import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestIntent
+import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestStatus
 import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.RequestGroup
@@ -25,8 +38,8 @@ import org.hl7.fhir.r4.model.RequestGroup.RequestStatus
 import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.ServiceRequest
-import org.hl7.fhir.r4.model.ServiceRequest.ServiceRequestStatus
 import org.hl7.fhir.r4.model.ServiceRequest.ServiceRequestIntent
+import org.hl7.fhir.r4.model.ServiceRequest.ServiceRequestStatus
 import org.hl7.fhir.r4.model.Task
 import org.hl7.fhir.r4.model.Task.TaskIntent
 import org.hl7.fhir.r4.model.Task.TaskStatus
@@ -41,26 +54,21 @@ class RequestManager(
   /** Ensure the Task has a status and intent defined */
   private fun validateTask(task: Task) {
     task.id = UUID.randomUUID().toString()
-    if (task.status == null)
-      task.status = TaskStatus.DRAFT
-    if (task.intent == null)
-      task.intent = TaskIntent.PROPOSAL
+    if (task.status == null) task.status = TaskStatus.DRAFT
+    if (task.intent == null) task.intent = TaskIntent.PROPOSAL
   }
 
   private fun validateServiceRequest(serviceRequest: ServiceRequest) {
     serviceRequest.id = UUID.randomUUID().toString()
-    if (serviceRequest.status == null)
-      serviceRequest.status = ServiceRequestStatus.DRAFT
+    if (serviceRequest.status == null) serviceRequest.status = ServiceRequestStatus.DRAFT
     serviceRequest.intent = ServiceRequestIntent.PROPOSAL
   }
 
   private fun validateMedicationRequest(medicationRequest: MedicationRequest) {
     medicationRequest.id = UUID.randomUUID().toString()
-    if (medicationRequest.status == null)
-      medicationRequest.status = MedicationRequestStatus.DRAFT
+    if (medicationRequest.status == null) medicationRequest.status = MedicationRequestStatus.DRAFT
     medicationRequest.intent = MedicationRequestIntent.PROPOSAL
   }
-
 
   /** Creates the request given a RequestGroup or RequestOrchestration? */
   suspend fun createRequestFromRequestGroup(requestGroup: RequestGroup): List<Resource> {
@@ -70,14 +78,12 @@ class RequestManager(
         is Task -> validateTask(request)
         is MedicationRequest -> validateMedicationRequest(request)
         is ServiceRequest -> validateServiceRequest(request)
-        is CommunicationRequest -> { }
-        else -> { }
+        is CommunicationRequest -> {}
+        else -> {}
       }
-      if (requestHandler.acceptProposedRequest(request)) {
-        fhirEngine.create(request)
-        println(jsonParser.encodeResourceToString(request))
-        resourceList.add(request)
-      }
+      fhirEngine.create(request)
+      println(jsonParser.encodeResourceToString(request))
+      resourceList.add(request)
     }
     return resourceList
   }
@@ -89,7 +95,7 @@ class RequestManager(
     intent: String = ""
   ): List<Resource> {
     val requestList: MutableList<Resource> = mutableListOf()
-    if (enumValues<TaskManager.Companion.SupportedRequestResources>().any { it.value.toCode() == requestType.name }) {
+    if (enumValues<SupportedRequestResources>().any { it.value.toCode() == requestType.name }) {
       val xFhirQueryBuilder = StringBuilder()
       xFhirQueryBuilder.append("${requestType.name}?subject=Patient/$patientId")
       if (status.isNotEmpty()) {
@@ -103,10 +109,10 @@ class RequestManager(
         requestList.add(item.resource)
       }
     }
-    return requestList  // not a valid or supported request
+    return requestList // not a valid or supported request
   }
 
-  fun getMappedStatus(status: String, resourceType: SupportedRequestResources): String {
+  private fun getMappedStatus(status: String, resourceType: SupportedRequestResources): String {
     when (resourceType) {
       SupportedRequestResources.TASK -> {
         return when (status) {
@@ -119,7 +125,6 @@ class RequestManager(
           else -> ""
         }
       }
-
       SupportedRequestResources.MEDICATIONREQUEST -> {
         return when (status) {
           "draft" -> MedicationRequestStatus.DRAFT.toCode().lowercase()
@@ -131,7 +136,6 @@ class RequestManager(
           else -> ""
         }
       }
-
       SupportedRequestResources.SERVICEREQUEST -> {
         return when (status) {
           "draft" -> ServiceRequestStatus.DRAFT.toCode().lowercase()
@@ -177,50 +181,41 @@ class RequestManager(
     currentStatus: RequestStatus?,
     newStatus: RequestStatus,
   ): Boolean {
-    if (newStatus == RequestStatus.DRAFT)
-      return currentStatus == RequestStatus.NULL
+    if (newStatus == RequestStatus.DRAFT) return currentStatus == RequestStatus.NULL
 
     if (newStatus == RequestStatus.ACTIVE)
       return (currentStatus == RequestStatus.DRAFT || currentStatus == RequestStatus.ONHOLD)
 
-    if (newStatus == RequestStatus.ONHOLD)
-      return currentStatus == RequestStatus.ACTIVE
+    if (newStatus == RequestStatus.ONHOLD) return currentStatus == RequestStatus.ACTIVE
 
-    if (newStatus == RequestStatus.COMPLETED)
-      return currentStatus == RequestStatus.ACTIVE
+    if (newStatus == RequestStatus.COMPLETED) return currentStatus == RequestStatus.ACTIVE
 
-    if (newStatus == RequestStatus.REVOKED)
-      return currentStatus == RequestStatus.ACTIVE
+    if (newStatus == RequestStatus.REVOKED) return currentStatus == RequestStatus.ACTIVE
 
     return newStatus == RequestStatus.ENTEREDINERROR
   }
 
-  private suspend fun updateTaskStatus(task: Task, status: TaskStatus) {
-    // is transition valid - refer: https://www.hl7.org/fhir/request.html#statemachine
-    val currentStatus = task.status
-    if (isValidStatusTransition(
-        RequestUtils.mapTaskStatusToRequestStatus(currentStatus),
-        RequestUtils.mapTaskStatusToRequestStatus(status)
-      )
-    ) {
-      task.status = status
-      task.meta.lastUpdated = Date.from(Instant.now())
-      fhirEngine.update(task)
-    }
-    // else do nothing
-  }
-
-
-  suspend fun handleDoNotPerform(medicationRequest: MedicationRequest, requestConfiguration: List<RequestConfiguration> = emptyList()) {
+  private suspend fun handleDoNotPerform(
+    medicationRequest: MedicationRequest,
+    requestConfiguration: List<RequestConfiguration> = emptyList()
+  ) {
     println("Do not perform handler")
     if (medicationRequest.intent == MedicationRequestIntent.PROPOSAL) {
       println(medicationRequest.subject.reference)
       val patientReference = medicationRequest.subject.reference
 
-      val medicationRequestPlan = fhirEngine.search("MedicationRequest?subject=$patientReference&intent=plan").first().resource as MedicationRequest
+      val medicationRequestPlan =
+        fhirEngine
+          .search("MedicationRequest?subject=$patientReference&intent=plan")
+          .first()
+          .resource as MedicationRequest
 
       println("order to be cancelled")
-      endPlan(medicationRequestPlan,MedicationRequestStatus.STOPPED, "Do Not Perform MedicationRequest received")
+      endPlan(
+        medicationRequestPlan,
+        MedicationRequestStatus.STOPPED,
+        "Do Not Perform MedicationRequest received"
+      )
 
       val newMedicationRequestPlan = beginPlan(medicationRequest, emptyList())
       val newMedicationRequestOrder = beginOrder(newMedicationRequestPlan, emptyList())
@@ -228,9 +223,18 @@ class RequestManager(
     }
   }
 
-  suspend fun evaluateNextStage(requestList: List<Resource>, requestConfiguration: List<RequestConfiguration>) {
-    for (request in requestList) {
+  suspend fun evaluateNextStage(
+    patientId: String,
+    requestList: List<Resource>,
+    requestConfiguration: List<RequestConfiguration>
+  ) {
+    // Workaround to handle CI questionnaire & PD --> this should be represented in the care config
+    // If no Do-Not-Perform resources are created when the CI PD is applied, begin order
+    if (requestList.isEmpty()) {
+      evaluateNextStepsForEmptyResourceList(patientId, requestConfiguration)
+    }
 
+    for (request in requestList) {
       when (request) {
         is MedicationRequest -> {
           if (request.doNotPerform) handleDoNotPerform(request, emptyList())
@@ -240,26 +244,51 @@ class RequestManager(
         }
         is ServiceRequest -> {
           val patientReference = request.subject.reference
-          val medicationRequestPlan = fhirEngine.search("MedicationRequest?subject=$patientReference&intent=plan").first().resource as MedicationRequest
+          val medicationRequestPlan =
+            fhirEngine
+              .search("MedicationRequest?subject=$patientReference&intent=plan")
+              .first()
+              .resource as MedicationRequest
           medicationRequestPlan.status = MedicationRequestStatus.ONHOLD
           println(jsonParser.encodeResourceToString(medicationRequestPlan))
           request.meta.lastUpdated = Date.from(Instant.now())
           fhirEngine.update(medicationRequestPlan)
         }
-        else -> {  }
+        else -> {}
       }
     }
   }
 
-  suspend fun beginProposal(medicationRequest: MedicationRequest, requestConfiguration: List<RequestConfiguration>) {
+  private suspend fun evaluateNextStepsForEmptyResourceList(
+    patientId: String,
+    requestConfiguration: List<RequestConfiguration>
+  ) {
+    // begin order and end plan
+    val medicationRequestPlans =
+      getRequestsForPatient(patientId, ResourceType.MedicationRequest, intent = "plan")
+
+    for (medicationRequestPlan in medicationRequestPlans) {
+      println(
+        "moving to order for ${jsonParser.encodeResourceToString(medicationRequestPlans.first())}"
+      )
+      beginOrder(
+        medicationRequestPlan as MedicationRequest,
+        requestConfiguration,
+        "No Contraindications detected so proceeding with order"
+      )
+    }
+  }
+
+  suspend fun beginProposal(
+    medicationRequest: MedicationRequest,
+    requestConfiguration: List<RequestConfiguration>
+  ) {
     if (medicationRequest.status == MedicationRequestStatus.DRAFT) {
       medicationRequest.status = MedicationRequestStatus.ACTIVE
 
       if (requestConfiguration.isNotEmpty()) {
-        val intentConfig = getNextActionForMedicationRequest(
-          medicationRequest,
-          requestConfiguration
-        )
+        val intentConfig =
+          getNextActionForMedicationRequest(medicationRequest, requestConfiguration)
 
         if (intentConfig != null) {
           if (intentConfig.action == "begin-plan") {
@@ -278,17 +307,25 @@ class RequestManager(
     }
   }
 
-  suspend fun endProposal(medicationRequest: MedicationRequest, status: MedicationRequestStatus, reason: String = "") {
+  suspend fun endProposal(
+    medicationRequest: MedicationRequest,
+    status: MedicationRequestStatus,
+    reason: String = ""
+  ) {
     if (medicationRequest.status == MedicationRequestStatus.ACTIVE) {
       medicationRequest.status = status
-      medicationRequest.statusReason = CodeableConcept().addCoding(Coding().apply{ display = reason})
+      medicationRequest.statusReason =
+        CodeableConcept().addCoding(Coding().apply { display = reason })
       medicationRequest.meta.lastUpdated = Date.from(Instant.now())
       fhirEngine.update(medicationRequest)
     }
   }
 
-
-  suspend fun beginPlan(medicationRequest: MedicationRequest, requestConfiguration: List<RequestConfiguration>, endProposalMessage: String = ""): MedicationRequest {
+  suspend fun beginPlan(
+    medicationRequest: MedicationRequest,
+    requestConfiguration: List<RequestConfiguration>,
+    endProposalMessage: String = ""
+  ): MedicationRequest {
     if (medicationRequest.status == MedicationRequestStatus.DRAFT) {
       medicationRequest.status = MedicationRequestStatus.ACTIVE
     }
@@ -300,28 +337,18 @@ class RequestManager(
       newMedicationRequest.basedOn.add(Reference(medicationRequest))
       newMedicationRequest.supportingInformation = null
 
-      endProposal(
-        medicationRequest,
-        MedicationRequestStatus.COMPLETED,
-        endProposalMessage
-      )
+      endProposal(medicationRequest, MedicationRequestStatus.COMPLETED, endProposalMessage)
 
       if (requestConfiguration.isNotEmpty()) {
-        val intentConfig = getNextActionForMedicationRequest(
-          newMedicationRequest,
-          requestConfiguration
-        )
+        val intentConfig =
+          getNextActionForMedicationRequest(newMedicationRequest, requestConfiguration)
 
         if (intentConfig != null) {
           if (intentConfig.action == "begin-order") {
             if (intentConfig.condition != "automatic") {
               newMedicationRequest.addSupportingInformation(Reference(intentConfig.condition))
             } else { // automatic transition from plan to order
-              beginOrder(
-                newMedicationRequest,
-                requestConfiguration,
-                "Auto-acceptance of proposal"
-              )
+              beginOrder(newMedicationRequest, requestConfiguration, "Auto-acceptance of proposal")
             }
           } else {
             // do nothing
@@ -342,17 +369,27 @@ class RequestManager(
     return MedicationRequest()
   }
 
-  suspend fun endPlan(medicationRequest: MedicationRequest, status: MedicationRequestStatus, reason: String = "") {
+  suspend fun endPlan(
+    medicationRequest: MedicationRequest,
+    status: MedicationRequestStatus,
+    reason: String = ""
+  ) {
     if (medicationRequest.status == MedicationRequestStatus.ACTIVE ||
-      medicationRequest.status == MedicationRequestStatus.DRAFT) {
+        medicationRequest.status == MedicationRequestStatus.DRAFT
+    ) {
       medicationRequest.status = status
-      medicationRequest.statusReason = CodeableConcept().addCoding(Coding().apply{ display = reason})
+      medicationRequest.statusReason =
+        CodeableConcept().addCoding(Coding().apply { display = reason })
       medicationRequest.meta.lastUpdated = Date.from(Instant.now())
       fhirEngine.update(medicationRequest)
     }
   }
 
-  suspend fun beginOrder(medicationRequest: MedicationRequest, requestConfiguration: List<RequestConfiguration>, endPlanMessage: String = ""): MedicationRequest {
+  suspend fun beginOrder(
+    medicationRequest: MedicationRequest,
+    requestConfiguration: List<RequestConfiguration>,
+    endPlanMessage: String = ""
+  ): MedicationRequest {
     if (medicationRequest.status == MedicationRequestStatus.DRAFT) {
       medicationRequest.status = MedicationRequestStatus.ACTIVE
     }
@@ -364,17 +401,11 @@ class RequestManager(
       newMedicationRequest.basedOn.add(Reference(medicationRequest))
       newMedicationRequest.supportingInformation = null
 
-      endPlan(
-        medicationRequest,
-        MedicationRequestStatus.COMPLETED,
-        endPlanMessage
-      )
+      endPlan(medicationRequest, MedicationRequestStatus.COMPLETED, endPlanMessage)
 
       if (requestConfiguration.isNotEmpty()) {
-        val intentConfig = getNextActionForMedicationRequest(
-          newMedicationRequest,
-          requestConfiguration
-        )
+        val intentConfig =
+          getNextActionForMedicationRequest(newMedicationRequest, requestConfiguration)
 
         if (intentConfig != null) {
           if (intentConfig.action == "complete-order") {
@@ -405,11 +436,17 @@ class RequestManager(
     return MedicationRequest()
   }
 
-  suspend fun endOrder(medicationRequest: MedicationRequest, status: MedicationRequestStatus, reason: String = "") {
+  suspend fun endOrder(
+    medicationRequest: MedicationRequest,
+    status: MedicationRequestStatus,
+    reason: String = ""
+  ) {
     if (medicationRequest.status == MedicationRequestStatus.ACTIVE ||
-      medicationRequest.status == MedicationRequestStatus.DRAFT) {
+        medicationRequest.status == MedicationRequestStatus.DRAFT
+    ) {
       medicationRequest.status = status
-      medicationRequest.statusReason = CodeableConcept().addCoding(Coding().apply{ display = reason})
+      medicationRequest.statusReason =
+        CodeableConcept().addCoding(Coding().apply { display = reason })
       medicationRequest.meta.lastUpdated = Date.from(Instant.now())
       fhirEngine.update(medicationRequest)
     }
@@ -423,8 +460,6 @@ class RequestManager(
     return fhirEngine.get(IdType(questionnaireId).idPart)
   }
 
-
-
   companion object {
     enum class SupportedRequestResources(val value: RequestResourceType) {
       TASK(RequestResourceType.TASK),
@@ -432,13 +467,13 @@ class RequestManager(
       SERVICEREQUEST(RequestResourceType.SERVICEREQUEST)
     }
 
-    fun getNextActionForMedicationRequest(medicationRequest: MedicationRequest, requestConfiguration: List<RequestConfiguration>): RequestConfiguration.IntentCondition? {
-      val medicationRequestCfg = requestConfiguration.firstOrNull {
-        it.requestType == "MedicationRequest"
-      }?.intentConditions?.firstOrNull {
-        it.intent == medicationRequest.intent.toCode()
-      }
-      return medicationRequestCfg
+    fun getNextActionForMedicationRequest(
+      medicationRequest: MedicationRequest,
+      requestConfiguration: List<RequestConfiguration>
+    ): RequestConfiguration.IntentCondition? {
+      return requestConfiguration
+        .firstOrNull { it.requestType == "MedicationRequest" }
+        ?.intentConditions?.firstOrNull { it.intent == medicationRequest.intent.toCode() }
     }
   }
 }

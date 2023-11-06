@@ -28,12 +28,11 @@ import org.hl7.fhir.r4.model.Resource
 import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
-import org.hl7.fhir.r4.model.Task.TaskStatus
 
 class TaskViewPagerViewModel(application: Application, private val state: SavedStateHandle) :
   AndroidViewModel(application) {
-  val livePendingTasksCount = MutableLiveData<Int>()
-  val liveCompletedTasksCount = MutableLiveData<Int>()
+  val livePendingActivitiesCount = MutableLiveData<Int>()
+  val liveCompletedActivitiesCount = MutableLiveData<Int>()
   val patientName = MutableLiveData<String>()
 
   private val requestManager =
@@ -43,10 +42,15 @@ class TaskViewPagerViewModel(application: Application, private val state: SavedS
 
   fun getTasksCount(patientId: String) {
     viewModelScope.launch {
-      livePendingTasksCount.value =
-        requestManager.getRequestsCount(patientId, status = "draft") + requestManager.getRequestsCount(patientId, status = "active") + requestManager.getRequestsCount(patientId, status = "on-hold")
+      livePendingActivitiesCount.value =
+        requestManager.getRequestsCount(patientId, status = "draft") +
+          requestManager.getRequestsCount(patientId, status = "active") +
+          requestManager.getRequestsCount(patientId, status = "on-hold")
 
-      val liveCompletedTasks = requestManager.getAllRequestsForPatient(patientId, "completed") + requestManager.getAllRequestsForPatient(patientId, "cancelled") + requestManager.getAllRequestsForPatient(patientId, "stopped")
+      val liveCompletedTasks =
+        requestManager.getAllRequestsForPatient(patientId, "completed") +
+          requestManager.getAllRequestsForPatient(patientId, "cancelled") +
+          requestManager.getAllRequestsForPatient(patientId, "stopped")
 
       val orders: MutableList<Resource> = mutableListOf()
       val plans: MutableList<Resource> = mutableListOf()
@@ -63,23 +67,26 @@ class TaskViewPagerViewModel(application: Application, private val state: SavedS
       }
       for (request in liveCompletedTasks) {
         if (request is MedicationRequest) {
-          if (request.intent == MedicationRequest.MedicationRequestIntent.PLAN && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || orders.size == 0)) {
+          if (request.intent == MedicationRequest.MedicationRequestIntent.PLAN &&
+              (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED ||
+                orders.size == 0)
+          ) {
             plans.add(request)
           }
         }
       }
       for (request in liveCompletedTasks) {
         if (request is MedicationRequest) {
-          if (request.intent == MedicationRequest.MedicationRequestIntent.PROPOSAL && (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED || (orders.size == 0 && plans.size == 0))) {
+          if (request.intent == MedicationRequest.MedicationRequestIntent.PROPOSAL &&
+              (request.status != MedicationRequest.MedicationRequestStatus.COMPLETED ||
+                (orders.size == 0 && plans.size == 0))
+          ) {
             proposals.add(request)
           }
         }
       }
       val requests = orders + proposals + plans + miscRequests
-      liveCompletedTasksCount.value = requests.size
-
-      // liveCompletedTasksCount.value =
-      //   requestManager.getRequestsCount(patientId, status = "completed") + requestManager.getRequestsCount(patientId, status = "cancelled") + requestManager.getRequestsCount(patientId, status = "stopped")
+      liveCompletedActivitiesCount.value = requests.size
     }
   }
 
@@ -90,23 +97,11 @@ class TaskViewPagerViewModel(application: Application, private val state: SavedS
     }
   }
 
-  /**
-   * Currently only [Task.TaskStatus.COMPLETED] & [Task.TaskStatus.READY] are shown. This logic
-   * could be extended.
-   */
-  fun getTaskStatus(position: Int): String {
+  fun getActivityStatus(position: Int): String {
     return when (position) {
-      0 -> TaskStatus.DRAFT
-      1 -> TaskStatus.COMPLETED
-      else -> TaskStatus.READY
-    }.toCode()
-  }
-
-  fun getRequestResourceType(position: Int): String {
-    return when (position) {
-      0 -> TaskStatus.READY
-      1 -> TaskStatus.COMPLETED
-      else -> TaskStatus.READY
-    }.toCode()
+      0 -> "draft"
+      1 -> "completed"
+      else -> "ready"
+    }
   }
 }

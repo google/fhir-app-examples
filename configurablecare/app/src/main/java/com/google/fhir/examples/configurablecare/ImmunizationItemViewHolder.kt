@@ -17,19 +17,19 @@ package com.google.fhir.examples.configurablecare
 
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.fhir.examples.configurablecare.databinding.ObservationListItemBinding
+import com.google.fhir.examples.configurablecare.databinding.ImmunizationListItemBinding
 
-class ObservationItemViewHolder(private val binding: ObservationListItemBinding) :
+class ImmunizationItemViewHolder(private val binding: ImmunizationListItemBinding) :
   RecyclerView.ViewHolder(binding.root) {
-  private val observationTextView: TextView = binding.observationDetail
+  private val immunizationTextView: TextView = binding.immunizationDetail
 
-  fun bindTo(observationItem: PatientListViewModel.ObservationItem) {
-    this.observationTextView.text =
+  fun bindTo(immunizationItem: PatientListViewModel.ImmunizationItem) {
+    this.immunizationTextView.text =
       itemView.resources.getString(
-        R.string.observation_brief_text,
-        observationItem.code,
-        observationItem.value,
-        observationItem.effective
+        R.string.immunization_brief_text,
+        immunizationItem.code,
+        immunizationItem.value,
+        immunizationItem.effective
       )
   }
 }

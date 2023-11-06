@@ -30,11 +30,10 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.navArgs
 import com.google.android.fhir.datacapture.QuestionnaireFragment
+import com.google.android.fhir.testing.jsonParser
 import com.google.android.material.snackbar.Snackbar
 import com.google.fhir.examples.configurablecare.R
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
-import com.google.android.fhir.testing.jsonParser
-import org.hl7.fhir.instance.model.api.IIdType
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Questionnaire
 import org.hl7.fhir.r4.model.Task
@@ -52,12 +51,12 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
     setHasOptionsMenu(true)
     onBackPressed()
     setViewModelQuestionnaire()
-    careWorkflowExecutionViewModel.currentQuestionnaireId = IdType((jsonParser.parseResource(viewModel.questionnaireString) as Questionnaire).id).idPart
+    careWorkflowExecutionViewModel.currentQuestionnaireId =
+      IdType((jsonParser.parseResource(viewModel.questionnaireString) as Questionnaire).id).idPart
     careWorkflowExecutionViewModel.setCurrentStructureMap()
     viewModel.structureMapId = careWorkflowExecutionViewModel.currentStructureMapId
     viewModel.currentTargetResourceType = careWorkflowExecutionViewModel.currentTargetResourceType
-      viewModel.requestConfiguration =
-      careWorkflowExecutionViewModel.getActiveRequestConfiguration()
+    viewModel.requestConfiguration = careWorkflowExecutionViewModel.getActiveRequestConfiguration()
     viewModel.baseRequest = careWorkflowExecutionViewModel.selectedRequestItem
     observeResourcesSaveAction()
     if (savedInstanceState == null) {
@@ -105,8 +104,9 @@ class ScreenerFragment : Fragment(R.layout.screener_encounter_fragment) {
   }
 
   private fun onSubmitAction() {
-    val questionnaireId = IdType((jsonParser.parseResource(viewModel.questionnaireString) as Questionnaire).id).idPart
-    careWorkflowExecutionViewModel.setPlanDefinitionId("Questionnaire/${questionnaireId}")
+    val questionnaireId =
+      IdType((jsonParser.parseResource(viewModel.questionnaireString) as Questionnaire).id).idPart
+    careWorkflowExecutionViewModel.setPlanDefinitionId("Questionnaire/$questionnaireId")
     val questionnaireFragment =
       childFragmentManager.findFragmentByTag(QUESTIONNAIRE_FRAGMENT_TAG) as QuestionnaireFragment
     viewModel.saveScreenerEncounter(

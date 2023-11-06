@@ -15,7 +15,6 @@
  */
 package com.google.fhir.examples.configurablecare
 
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -66,7 +65,7 @@ class HomeFragment : Fragment() {
     val adapter =
       ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_dropdown_item)
     careConfiguration.supportedImplementationGuides.forEach {
-      adapter.add(it.implementationGuideConfig.entryPoint) // .substring("PlanDefinition/".length))
+      adapter.add(it.implementationGuideConfig.entryPoint)
     }
     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
     igSpinner.adapter = adapter

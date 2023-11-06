@@ -40,8 +40,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.FhirApplication
-import com.google.fhir.examples.configurablecare.MainActivity
 import com.google.android.fhir.sync.SyncJobStatus
 import com.google.fhir.examples.configurablecare.PatientListViewModel.PatientListViewModelFactory
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionStatus

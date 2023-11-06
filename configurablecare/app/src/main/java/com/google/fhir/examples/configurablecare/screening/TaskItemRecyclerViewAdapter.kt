@@ -19,7 +19,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
-import com.google.fhir.examples.configurablecare.screening.ListScreeningsViewModel
 import com.google.fhir.examples.configurablecare.databinding.ItemTaskViewBinding
 
 class TaskItemRecyclerViewAdapter(

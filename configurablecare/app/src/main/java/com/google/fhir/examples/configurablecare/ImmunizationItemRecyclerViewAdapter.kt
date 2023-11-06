@@ -19,34 +19,34 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
-import com.google.fhir.examples.configurablecare.databinding.ObservationListItemBinding
+import com.google.fhir.examples.configurablecare.databinding.ImmunizationListItemBinding
 
 /** UI Controller helper class to display list of observations. */
-class ObservationItemRecyclerViewAdapter :
-  ListAdapter<PatientListViewModel.ObservationItem, ObservationItemViewHolder>(
+class ImmunizationItemRecyclerViewAdapter :
+  ListAdapter<PatientListViewModel.ImmunizationItem, ImmunizationItemViewHolder>(
     ObservationItemDiffCallback()
   ) {
 
   class ObservationItemDiffCallback :
-    DiffUtil.ItemCallback<PatientListViewModel.ObservationItem>() {
+    DiffUtil.ItemCallback<PatientListViewModel.ImmunizationItem>() {
     override fun areItemsTheSame(
-      oldItem: PatientListViewModel.ObservationItem,
-      newItem: PatientListViewModel.ObservationItem
+      oldItem: PatientListViewModel.ImmunizationItem,
+      newItem: PatientListViewModel.ImmunizationItem
     ): Boolean = oldItem.id == newItem.id
 
     override fun areContentsTheSame(
-      oldItem: PatientListViewModel.ObservationItem,
-      newItem: PatientListViewModel.ObservationItem
+      oldItem: PatientListViewModel.ImmunizationItem,
+      newItem: PatientListViewModel.ImmunizationItem
     ): Boolean = oldItem.id == newItem.id
   }
 
-  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ObservationItemViewHolder {
-    return ObservationItemViewHolder(
-      ObservationListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImmunizationItemViewHolder {
+    return ImmunizationItemViewHolder(
+      ImmunizationListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
     )
   }
 
-  override fun onBindViewHolder(holder: ObservationItemViewHolder, position: Int) {
+  override fun onBindViewHolder(holder: ImmunizationItemViewHolder, position: Int) {
     val item = currentList[position]
     holder.bindTo(item)
   }

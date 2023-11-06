@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.fhir.examples.configurablecare.util
 
 // import com.google.android.fhir.datacapture.mapping.StructureMapExtractionContext
@@ -94,12 +93,12 @@ object CustomResourceMapper {
    * @param questionnaire A [Questionnaire] with data extraction extensions.
    * @param questionnaireResponse A [QuestionnaireResponse] with answers for [questionnaire].
    * @param structureMapExtractionContext The [IWorkerContext] may be used along with
-   *   [StructureMapUtilities] to parse the script and convert it into [StructureMap].
+   * [StructureMapUtilities] to parse the script and convert it into [StructureMap].
    * @return [Bundle] containing the extracted [Resource]s or empty Bundle if the extraction fails.
-   *   An exception might also be thrown in a few cases
+   * An exception might also be thrown in a few cases
    * @throws IllegalArgumentException when Resource getting extracted does conform different profile
-   *   than standard FHIR profile and argument loadProfile callback Implementation is not provided
-   *   to load different profile
+   * than standard FHIR profile and argument loadProfile callback Implementation is not provided to
+   * load different profile
    */
   suspend fun extract(
     questionnaire: Questionnaire,
@@ -182,14 +181,14 @@ object CustomResourceMapper {
    * StructureMap-based extraction.
    *
    * @param structureMapProvider provides the referenced [StructureMap] either from persistence or a
-   *   remote service.
+   * remote service.
    * @return a [Bundle] including the extraction results, or `null` if [structureMapProvider] is
-   *   missing.
+   * missing.
    *
    * See http://build.fhir.org/ig/HL7/sdc/extraction.html#structuremap-based-extraction for more on
    * StructureMap-based extraction.
    */
-  suspend fun extractByStructureMap(
+  private suspend fun extractByStructureMap(
     questionnaire: Questionnaire,
     questionnaireResponse: QuestionnaireResponse,
     structureMapExtractionContext: StructureMapExtractionContext,
@@ -200,50 +199,12 @@ object CustomResourceMapper {
 
     return Bundle().apply {
       StructureMapUtilities(
-        workerContext,
-        structureMapExtractionContext.transformSupportServices,
-      )
+          workerContext,
+          structureMapExtractionContext.transformSupportServices,
+        )
         .transform(workerContext, questionnaireResponse, structureMap, this)
     }
   }
-
-  // private suspend fun populateInitialValues(
-  //   questionnaireItems: List<Questionnaire.QuestionnaireItemComponent>,
-  //   launchContexts: Map<String, Resource>,
-  // ) {
-  //   questionnaireItems.forEach { populateInitialValue(it, launchContexts) }
-  // }
-
-  // private suspend fun populateInitialValue(
-  //   questionnaireItem: Questionnaire.QuestionnaireItemComponent,
-  //   launchContexts: Map<String, Resource>,
-  // ) {
-  //   check(questionnaireItem.initial.isEmpty() || questionnaireItem.initialExpression == null) {
-  //     "QuestionnaireItem item is not allowed to have both initial.value and initial expression. See rule at http://build.fhir.org/ig/HL7/sdc/expressions.html#initialExpression."
-  //   }
-  //
-  //   questionnaireItem.initialExpression
-  //     ?.let {
-  //       fhirPathEngine
-  //         .evaluate(
-  //           /* appContext= */ launchContexts,
-  //           /* focusResource= */ null,
-  //           /* rootResource= */ null,
-  //           /* base= */ null,
-  //           /* path= */ it.expression,
-  //         )
-  //         .firstOrNull()
-  //     }
-  //     ?.let {
-  //       // Set initial value for the questionnaire item. Questionnaire items should not have both
-  //       // initial value and initial expression.
-  //       val value = it.asExpectedType(questionnaireItem.type)
-  //       questionnaireItem.initial =
-  //         mutableListOf(Questionnaire.QuestionnaireItemInitialComponent().setValue(value))
-  //     }
-  //
-  //   populateInitialValues(questionnaireItem.item, launchContexts)
-  // }
 
   /**
    * Updates corresponding fields in [extractionContext] with answers in
@@ -264,18 +225,15 @@ object CustomResourceMapper {
   ) {
     val questionnaireItemListIterator = questionnaireItemList.iterator()
     val questionnaireResponseItemListIterator = questionnaireResponseItemList.iterator()
-    while (
-      questionnaireItemListIterator.hasNext() && questionnaireResponseItemListIterator.hasNext()
-    ) {
+    while (questionnaireItemListIterator.hasNext() &&
+      questionnaireResponseItemListIterator.hasNext()) {
       val currentQuestionnaireResponseItem = questionnaireResponseItemListIterator.next()
       var currentQuestionnaireItem = questionnaireItemListIterator.next()
       // Find the next questionnaire item with the same link ID. This is necessary because some
       // questionnaire items that are disabled might not have corresponding questionnaire response
       // items.
-      while (
-        questionnaireItemListIterator.hasNext() &&
-        currentQuestionnaireItem.linkId != currentQuestionnaireResponseItem.linkId
-      ) {
+      while (questionnaireItemListIterator.hasNext() &&
+        currentQuestionnaireItem.linkId != currentQuestionnaireResponseItem.linkId) {
         currentQuestionnaireItem = questionnaireItemListIterator.next()
       }
       if (currentQuestionnaireItem.linkId == currentQuestionnaireResponseItem.linkId) {
@@ -466,8 +424,7 @@ object CustomResourceMapper {
             questionnaireItem.definition.lastIndexOf("#") + 1,
             questionnaireItem.definition.lastIndexOf("."),
           )
-        if (
-          isExtensionSupportedByProfile(
+        if (isExtensionSupportedByProfile(
             structureDefinition = it,
             extensionForType = extensionForType,
             fieldName = fieldName,
@@ -510,8 +467,8 @@ private fun isExtensionSupportedByProfile(
  * @param questionnaireResponseItem QuestionnaireResponseItemComponent for response value
  * @param base
  * - resource's Base class instance See
- *   https://hapifhir.io/hapi-fhir/docs/model/profiles_and_extensions.html#extensions for more on
- *   custom extensions
+ * https://hapifhir.io/hapi-fhir/docs/model/profiles_and_extensions.html#extensions for more on
+ * custom extensions
  */
 private fun addDefinitionBasedCustomExtension(
   questionnaireItem: Questionnaire.QuestionnaireItemComponent,

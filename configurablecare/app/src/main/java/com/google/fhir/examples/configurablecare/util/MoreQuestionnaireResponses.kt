@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.fhir.examples.configurablecare.util
 
 import android.text.Spanned
@@ -106,7 +105,6 @@ internal fun Any.invokeFunction(
     .apply { isAccessible = true }
     .invoke(this, *args)
 
-
 /** Converts StringType to CodeType. */
 internal fun StringType.toCodeType(): CodeType {
   return CodeType(value)
@@ -185,9 +183,9 @@ internal inline fun <T> List<Questionnaire.QuestionnaireItemComponent>.zipByLink
   questionnaireResponseItemList: List<QuestionnaireResponse.QuestionnaireResponseItemComponent>,
   transform:
     (
-    Questionnaire.QuestionnaireItemComponent,
-    QuestionnaireResponse.QuestionnaireResponseItemComponent,
-  ) -> T,
+      Questionnaire.QuestionnaireItemComponent,
+      QuestionnaireResponse.QuestionnaireResponseItemComponent,
+    ) -> T,
 ): List<T> {
   val linkIdToQuestionnaireResponseItemMap = questionnaireResponseItemList.associateBy { it.linkId }
   return mapNotNull { questionnaireItem ->
@@ -229,8 +227,8 @@ private fun unpackRepeatedGroups(
   questionnaireResponseItem.answer.forEach {
     it.item = unpackRepeatedGroups(questionnaireItem.item, it.item)
   }
-  return if (
-    questionnaireItem.type == Questionnaire.QuestionnaireItemType.GROUP && questionnaireItem.repeats
+  return if (questionnaireItem.type == Questionnaire.QuestionnaireItemType.GROUP &&
+      questionnaireItem.repeats
   ) {
     questionnaireResponseItem.answer.map {
       QuestionnaireResponse.QuestionnaireResponseItemComponent().apply {

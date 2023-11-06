@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.fhir.examples.configurablecare.util
 
 import org.hl7.fhir.r4.context.IWorkerContext
@@ -33,10 +32,10 @@ data class StructureMapExtractionContext(
    * hard-coded or use the [String] parameter to fetch the appropriate structure map.
    *
    * @param String The canonical URL for the Structure Map referenced in the
-   *   [Target structure map extension](http://hl7.org/fhir/uv/sdc/StructureDefinition-sdc-questionnaire-targetStructureMap.html)
-   *   of the questionnaire.
+   * [Target structure map extension](http://hl7.org/fhir/uv/sdc/StructureDefinition-sdc-questionnaire-targetStructureMap.html)
+   * of the questionnaire.
    * @param IWorkerContext May be used with other HAPI FHIR classes, like using
-   *   [StructureMapUtilities.parse] to parse content in the FHIR Mapping Language.
+   * [StructureMapUtilities.parse] to parse content in the FHIR Mapping Language.
    */
   /**
    * Optionally pass a custom version of [IWorkerContext].

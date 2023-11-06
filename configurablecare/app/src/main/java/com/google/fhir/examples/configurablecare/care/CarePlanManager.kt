@@ -24,26 +24,24 @@ import com.google.android.fhir.knowledge.KnowledgeManager
 import com.google.android.fhir.search.search
 import com.google.android.fhir.workflow.FhirOperator.Builder
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.hl7.fhir.r4.model.ActivityDefinition
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.CanonicalType
 import org.hl7.fhir.r4.model.CarePlan
 import org.hl7.fhir.r4.model.IdType
 import org.hl7.fhir.r4.model.Library
 import org.hl7.fhir.r4.model.MedicationRequest
+import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestStatus
 import org.hl7.fhir.r4.model.MetadataResource
 import org.hl7.fhir.r4.model.Patient
 import org.hl7.fhir.r4.model.PlanDefinition
 import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.RequestGroup
 import org.hl7.fhir.r4.model.Resource
-import org.hl7.fhir.r4.model.ResourceType
+import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
-
 
 /** Responsible for creating and managing CarePlans */
 class CarePlanManager(
@@ -59,8 +57,8 @@ class CarePlanManager(
       .knowledgeManager(knowledgeManager)
       .build()
 
-  private var taskManager: RequestResourceManager<Task> = TaskManager(fhirEngine)
-  private var requestManager: RequestManager = RequestManager(fhirEngine, fhirContext, TestRequestHandler())
+  private var requestManager: RequestManager =
+    RequestManager(fhirEngine, fhirContext, TestRequestHandler())
   private var cqlLibraryIdList = ArrayList<String>()
   private val jsonParser = FhirContext.forCached(FhirVersionEnum.R4).newJsonParser()
 
@@ -80,7 +78,7 @@ class CarePlanManager(
     return context.assets.open(filename).bufferedReader().use { it.readText() }
   }
 
-  suspend fun saveKnowledgeResources(path: String) {
+  suspend fun fetchKnowledgeResources(path: String) {
     val rootDirectory = File(context.filesDir, path)
     if (rootDirectory.exists()) {
       initializeKnowledgeManager(rootDirectory)
@@ -153,7 +151,7 @@ class CarePlanManager(
       ),
       rootDirectory,
     )
-    println("KM installed")
+    println("KM has been initialized")
   }
 
   /**
@@ -174,24 +172,19 @@ class CarePlanManager(
 
     println("PlanDefinition: ${CanonicalType(planDefinitionUri)}")
     val carePlanProposal =
-      fhirOperator.generateCarePlan(planDefinition = CanonicalType(planDefinitionUri), subject = "Patient/$patientId")
-        as CarePlan
+      fhirOperator.generateCarePlan(
+        planDefinition = CanonicalType(planDefinitionUri),
+        subject = "Patient/$patientId"
+      ) as CarePlan
     println(jsonParser.encodeResourceToString(carePlanProposal))
 
     // Fetch existing CarePlan of record for the Patient or create a new one if it does not exist
     val carePlanOfRecord = getCarePlanOfRecordForPatient(patient)
 
     // Accept the proposed (transient) CarePlan by default and add tasks to the CarePlan of record
-    val resourceList = acceptCarePlan(carePlanProposal, requestConfiguration)
+    val resourceList = acceptCarePlan(patientId, carePlanProposal, requestConfiguration)
 
-
-    // NOTE: This is a workaround until the CI PD works (dependent on SM extraction for CI Questionnaire)
-    if (resourceList.isEmpty() && planDefinitionUri.contains("IMMZD2DTMeaslesCI")) {
-      // begin order and end plan
-      val medicationRequestPlans = requestManager.getRequestsForPatient(patientId, ResourceType.MedicationRequest, intent = "plan")
-      println("moving to order for ${jsonParser.encodeResourceToString(medicationRequestPlans.first())}")
-      requestManager.beginOrder(medicationRequestPlans.first() as MedicationRequest, requestConfiguration, "No Contraindications detected so proceeding with order")
-    }
+    addRequestResourcesToCarePlanOfRecord(carePlanOfRecord, resourceList)
   }
 
   /** Fetch the [CarePlan] of record for a given [Patient], if it exists, otherwise create it */
@@ -207,7 +200,7 @@ class CarePlanManager(
       fhirEngine.create(carePlanOfRecord)
       carePlanOfRecord
     } else {
-      existingCarePlans.first() as CarePlan
+      existingCarePlans.first().resource as CarePlan
     }
   }
 
@@ -217,24 +210,71 @@ class CarePlanManager(
   }
 
   /** Link the request resources created for the [Patient] back to the [CarePlan] of record */
-  private fun addRequestResourcesToCarePlanOfRecord(
+  private suspend fun addRequestResourcesToCarePlanOfRecord(
     carePlan: CarePlan,
     requestResourceList: List<Resource>,
   ) {
     for (resource in requestResourceList) {
-      when (resource.fhirType()) {
-        "Task" ->
+      when (resource) {
+        is Task ->
           carePlan.addActivity().setReference(Reference(resource)).detail.status =
-            taskManager.mapRequestResourceStatusToCarePlanStatus(resource as Task)
-        "ServiceRequest" -> TODO("Not supported yet")
-        "MedicationRequest" -> TODO("Not supported yet")
-        "SupplyRequest" -> TODO("Not supported yet")
-        "Procedure" -> TODO("Not supported yet")
-        "DiagnosticReport" -> TODO("Not supported yet")
-        "Communication" -> TODO("Not supported yet")
-        "CommunicationRequest" -> TODO("Not supported yet")
-        else -> TODO("Not a valid request resource")
+            mapTaskStatusToCarePlanStatus(resource)
+        is ServiceRequest ->
+          carePlan.addActivity().setReference(Reference(resource)).detail.status =
+            mapServiceRequestStatusToCarePlanStatus(resource)
+        is MedicationRequest ->
+          carePlan.addActivity().setReference(Reference(resource)).detail.status =
+            mapMedicationRequestStatusToCarePlanStatus(resource)
+        else -> TODO("Not a supported request resource")
       }
+    }
+    fhirEngine.update(carePlan)
+  }
+
+  /** Map [Task] status to [CarePlan] status */
+  private fun mapTaskStatusToCarePlanStatus(resource: Task): CarePlan.CarePlanActivityStatus {
+    // Refer: http://hl7.org/fhir/R4/valueset-care-plan-activity-status.html for some mapping
+    // guidelines
+    return when (resource.status) {
+      Task.TaskStatus.ACCEPTED -> CarePlan.CarePlanActivityStatus.SCHEDULED
+      Task.TaskStatus.DRAFT -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      Task.TaskStatus.REQUESTED -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      Task.TaskStatus.RECEIVED -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      Task.TaskStatus.REJECTED -> CarePlan.CarePlanActivityStatus.STOPPED
+      Task.TaskStatus.READY -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      Task.TaskStatus.CANCELLED -> CarePlan.CarePlanActivityStatus.CANCELLED
+      Task.TaskStatus.INPROGRESS -> CarePlan.CarePlanActivityStatus.INPROGRESS
+      Task.TaskStatus.ONHOLD -> CarePlan.CarePlanActivityStatus.ONHOLD
+      Task.TaskStatus.FAILED -> CarePlan.CarePlanActivityStatus.STOPPED
+      Task.TaskStatus.COMPLETED -> CarePlan.CarePlanActivityStatus.COMPLETED
+      Task.TaskStatus.ENTEREDINERROR -> CarePlan.CarePlanActivityStatus.ENTEREDINERROR
+      Task.TaskStatus.NULL -> CarePlan.CarePlanActivityStatus.NULL
+      else -> CarePlan.CarePlanActivityStatus.NULL
+    }
+  }
+
+  private fun mapMedicationRequestStatusToCarePlanStatus(
+    resource: MedicationRequest
+  ): CarePlan.CarePlanActivityStatus {
+    // Refer: http://hl7.org/fhir/R4/valueset-care-plan-activity-status.html for some mapping
+    // guidelines
+    return when (resource.status) {
+      MedicationRequestStatus.ACTIVE -> CarePlan.CarePlanActivityStatus.INPROGRESS
+      MedicationRequestStatus.DRAFT -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      else -> CarePlan.CarePlanActivityStatus.fromCode(resource.status.toCode())
+    }
+  }
+
+  private fun mapServiceRequestStatusToCarePlanStatus(
+    resource: ServiceRequest
+  ): CarePlan.CarePlanActivityStatus {
+    // Refer: http://hl7.org/fhir/R4/valueset-care-plan-activity-status.html for some mapping
+    // guidelines
+    return when (resource.status) {
+      ServiceRequest.ServiceRequestStatus.ACTIVE -> CarePlan.CarePlanActivityStatus.INPROGRESS
+      ServiceRequest.ServiceRequestStatus.REVOKED -> CarePlan.CarePlanActivityStatus.CANCELLED
+      ServiceRequest.ServiceRequestStatus.DRAFT -> CarePlan.CarePlanActivityStatus.NOTSTARTED
+      else -> CarePlan.CarePlanActivityStatus.fromCode(resource.status.toCode())
     }
   }
 
@@ -245,7 +285,7 @@ class CarePlanManager(
   ) {
     for (resource in requestResourceList) {
       when (resource.fhirType()) {
-        "Task" -> taskManager.linkCarePlanToRequestResource(resource as Task, carePlan)
+        "Task" -> {} // requestManager.linkCarePlanToRequestResource(resource as Task, carePlan)
         "ServiceRequest" -> TODO("Not supported yet")
         "MedicationRequest" -> TODO("Not supported yet")
         "SupplyRequest" -> TODO("Not supported yet")
@@ -259,9 +299,10 @@ class CarePlanManager(
   }
 
   private suspend fun acceptCarePlan(
+    patientId: String,
     proposedCarePlan: CarePlan,
     requestConfiguration: List<RequestConfiguration>,
-  ): List<Resource>  {
+  ): List<Resource> {
     // modify this and use:
     val resourceList: MutableList<Resource> = mutableListOf()
     for (request in proposedCarePlan.contained) {
@@ -270,7 +311,7 @@ class CarePlanManager(
       }
     }
 
-    requestManager.evaluateNextStage(resourceList, requestConfiguration)
+    requestManager.evaluateNextStage(patientId, resourceList, requestConfiguration)
     return resourceList
   }
 }

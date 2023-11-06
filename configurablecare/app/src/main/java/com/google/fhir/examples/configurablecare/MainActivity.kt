@@ -24,7 +24,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.fhir.examples.configurablecare.databinding.ActivityMainBinding
-import com.google.fhir.examples.configurablecare.MainActivityViewModel
 
 const val MAX_RESOURCE_COUNT = 20
 

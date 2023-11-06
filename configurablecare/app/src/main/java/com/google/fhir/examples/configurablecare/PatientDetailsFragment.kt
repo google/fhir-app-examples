@@ -34,8 +34,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.FhirApplication
-import com.google.fhir.examples.configurablecare.MainActivity
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionStatus
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
 import com.google.fhir.examples.configurablecare.databinding.PatientDetailBinding

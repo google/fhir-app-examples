@@ -22,7 +22,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.android.fhir.FhirEngine
-import com.google.fhir.examples.configurablecare.FhirApplication
 import com.google.android.fhir.search.Order
 import com.google.android.fhir.search.StringFilterModifier
 import com.google.android.fhir.search.count
@@ -30,9 +29,8 @@ import com.google.android.fhir.search.search
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
+import org.hl7.fhir.r4.model.MedicationRequest
 import org.hl7.fhir.r4.model.Patient
-import org.hl7.fhir.r4.model.RiskAssessment
-import org.hl7.fhir.r4.model.Task
 
 /**
  * The ViewModel helper class for PatientItemRecyclerViewAdapter, that is responsible for preparing
@@ -107,32 +105,30 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
       }
       .mapIndexed { index, fhirPatient ->
         fhirPatient.resource.toPatientItem(index + 1).apply {
-          pendingTasksCount =
-            requestManager.getRequestsCount(resourceId, status = "draft")
+          pendingTasksCount = requestManager.getRequestsCount(resourceId, status = "draft")
         }
       }
       .sortedByDescending { it.pendingTasksCount }
       .let { patients.addAll(it) }
 
-    val risks = getRiskAssessments()
-    patients.forEach { patient ->patient.risk = "No risk"
+    val risks = getPatientMedicalAlerts()
+    patients.forEach { patient ->
+      patient.risk = "No risk"
       risks["Patient/${patient.resourceId}"]?.let {
-        patient.risk = "No risk" // it.prediction?.first()?.qualitativeRisk?.coding?.first()?.code
+        patient.risk =
+          if (it.doNotPerform)
+            "Do not perform: " + it.medicationCodeableConcept.codingFirstRep.display
+          else ""
       }
     }
     return patients
   }
 
-  private suspend fun getRiskAssessments(): Map<String, RiskAssessment?> {
+  private suspend fun getPatientMedicalAlerts(): Map<String, MedicationRequest?> {
     return fhirEngine
-      .search<RiskAssessment> {}
+      .search<MedicationRequest> { filter(MedicationRequest.INTENT, { value = of("order") }) }
       .groupBy { it.resource.subject.reference }
-      .mapValues { entry ->
-        entry.value
-          .filter { it.resource.hasOccurrence() }
-          .maxByOrNull { it.resource.occurrenceDateTimeType.value }
-          ?.resource
-      }
+      .mapValues { entry -> entry.value.firstOrNull { it.resource.doNotPerform }?.resource }
   }
 
   /** The Patient's details for display purposes. */
@@ -148,14 +144,14 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
     val isActive: Boolean,
     val html: String,
     var risk: String? = "",
-    var riskItem: RiskAssessmentItem? = null,
+    var riskItem: MedicalAlertItem? = null,
     var pendingTasksCount: Int = 0
   ) {
     override fun toString(): String = name
   }
 
-  /** The Observation's details for display purposes. */
-  data class ObservationItem(
+  /** The Immunization record details for display purposes. */
+  data class ImmunizationItem(
     val id: String,
     val code: String,
     val effective: String,
@@ -164,7 +160,7 @@ class PatientListViewModel(application: Application, private val fhirEngine: Fhi
     override fun toString(): String = code
   }
 
-  data class ConditionItem(
+  data class MedicalAlertItem(
     val id: String,
     val code: String,
     val effective: String,
@@ -214,16 +210,4 @@ internal fun Patient.toPatientItem(position: Int): PatientListViewModel.PatientI
     isActive = isActive,
     html = html
   )
-}
-
-/**
- * Currently only [Task.TaskStatus.COMPLETED] & [Task.TaskStatus.READY] are shown. This logic could
- * be extended.
- */
-fun getTaskStatus(position: Int): String {
-  return when (position) {
-    0 -> Task.TaskStatus.READY
-    1 -> Task.TaskStatus.COMPLETED
-    else -> Task.TaskStatus.READY
-  }.toCode()
 }

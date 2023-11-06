@@ -19,7 +19,6 @@ import android.graphics.Color
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.fhir.examples.configurablecare.screening.ListScreeningsViewModel
 import com.google.fhir.examples.configurablecare.R
 import com.google.fhir.examples.configurablecare.databinding.ItemTaskViewBinding
 
@@ -48,31 +47,31 @@ class TaskItemViewHolder(binding: ItemTaskViewBinding) : RecyclerView.ViewHolder
     }
 
     if (taskItem.dueDate == "Do Not Perform") {
-      statusStr =  getTransition(taskItem) + "Do Not Perform"
-      this.taskStatus.setTextColor(Color.rgb(204,0,0))
+      statusStr = getTransition(taskItem) + "Do Not Perform"
+      this.taskStatus.setTextColor(Color.rgb(204, 0, 0))
       this.taskIcon.setImageResource(R.drawable.gm_remove_circle_outline_24)
     } else if (taskItem.status == "completed") {
-      statusStr =  getTransition(taskItem) + taskItem.status
+      statusStr = getTransition(taskItem) + taskItem.status
       this.taskStatus.setTextColor(Color.rgb(20, 108, 46))
       this.taskIcon.setImageResource(R.drawable.ic_task_check)
     } else if (taskItem.status == "cancelled") {
-      statusStr =  getTransition(taskItem) + taskItem.status
-      this.taskStatus.setTextColor(Color.rgb(204,0,0))
+      statusStr = getTransition(taskItem) + taskItem.status
+      this.taskStatus.setTextColor(Color.rgb(204, 0, 0))
       this.taskIcon.setImageResource(R.drawable.gm_remove_circle_outline_24)
     } else if (taskItem.status == "on-hold") {
-      statusStr =  getTransition(taskItem) + taskItem.status
-      this.taskStatus.setTextColor(Color.rgb(204,0,0))
+      statusStr = getTransition(taskItem) + taskItem.status
+      this.taskStatus.setTextColor(Color.rgb(204, 0, 0))
       this.taskIcon.setImageResource(R.drawable.gm_remove_circle_outline_24)
     } else if (taskItem.status == "stopped") {
-      this.taskStatus.setTextColor(Color.rgb(204,0,0))
-      statusStr =  getTransition(taskItem) + taskItem.status
+      this.taskStatus.setTextColor(Color.rgb(204, 0, 0))
+      statusStr = getTransition(taskItem) + taskItem.status
       this.taskIcon.setImageResource(R.drawable.gm_remove_circle_outline_24)
     } else if (taskItem.resourceType == "ServiceRequest") {
       statusStr = "Active"
-      this.taskStatus.setTextColor(Color.rgb(255,187,51))
+      this.taskStatus.setTextColor(Color.rgb(255, 187, 51))
       this.taskIcon.setImageResource(R.drawable.ic_error_48px)
     } else {
-      this.taskStatus.setTextColor(Color.rgb(11,87,208))
+      this.taskStatus.setTextColor(Color.rgb(11, 87, 208))
       statusStr = "Due " + getDate(taskItem.dueDate) + " | " + taskItem.intent
       this.taskIcon.setImageResource(R.drawable.ic_task)
     }
