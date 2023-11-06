@@ -29,7 +29,7 @@ import org.hl7.fhir.r4.model.ResourceType
 import org.hl7.fhir.r4.model.ServiceRequest
 import org.hl7.fhir.r4.model.Task
 
-class TaskViewPagerViewModel(application: Application, private val state: SavedStateHandle) :
+class ActivityViewPagerViewModel(application: Application, private val state: SavedStateHandle) :
   AndroidViewModel(application) {
   val livePendingActivitiesCount = MutableLiveData<Int>()
   val liveCompletedActivitiesCount = MutableLiveData<Int>()

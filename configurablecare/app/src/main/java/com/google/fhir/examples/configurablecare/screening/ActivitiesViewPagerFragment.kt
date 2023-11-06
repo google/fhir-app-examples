@@ -36,16 +36,16 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.google.fhir.examples.configurablecare.R
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionStatus
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
-import com.google.fhir.examples.configurablecare.databinding.FragmentTasksViewPagerBinding
+import com.google.fhir.examples.configurablecare.databinding.FragmentActivitiesViewPagerBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class TasksViewPagerFragment : Fragment() {
-  private val taskViewPagerViewModel: TaskViewPagerViewModel by viewModels()
+class ActivitiesViewPagerFragment : Fragment() {
+  private val taskViewPagerViewModel: ActivityViewPagerViewModel by viewModels()
   private val careWorkflowExecutionViewModel by activityViewModels<CareWorkflowExecutionViewModel>()
 
-  private val args: TasksViewPagerFragmentArgs by navArgs()
-  private var _binding: FragmentTasksViewPagerBinding? = null
+  private val args: ActivitiesViewPagerFragmentArgs by navArgs()
+  private var _binding: FragmentActivitiesViewPagerBinding? = null
   private val binding
     get() = _binding!!
   private lateinit var careWorkflowExecutionStatusLayout: LinearLayout
@@ -58,7 +58,7 @@ class TasksViewPagerFragment : Fragment() {
     savedInstanceState: Bundle?
   ): View {
     // Inflate the layout for this fragment
-    _binding = FragmentTasksViewPagerBinding.inflate(inflater, container, false)
+    _binding = FragmentActivitiesViewPagerBinding.inflate(inflater, container, false)
     return binding.root
   }
 
@@ -66,11 +66,11 @@ class TasksViewPagerFragment : Fragment() {
     Timber.d("TasksViewPagerFragment called: onViewCreated")
     val fragmentList =
       listOf(0, 1).map {
-        ListTasksFragment(this::navigateToQuestionnaireCallback).apply {
+        ListActivitiesFragment(this::navigateToQuestionnaireCallback).apply {
           arguments =
             bundleOf(
-              ListTasksFragment.PATIENT_ID_KEY to args.patientId,
-              ListTasksFragment.TASK_STATUS to taskViewPagerViewModel.getActivityStatus(it)
+              ListActivitiesFragment.PATIENT_ID_KEY to args.patientId,
+              ListActivitiesFragment.TASK_STATUS to taskViewPagerViewModel.getActivityStatus(it)
             )
         }
       }
@@ -93,15 +93,15 @@ class TasksViewPagerFragment : Fragment() {
       }
     }
     val tasksTabHeadings = listOf("Pending Activities", "Completed Activities")
-    TabLayoutMediator(binding.tasksTabLayout, binding.viewPager) { tab, position ->
+    TabLayoutMediator(binding.activitiesTabLayout, binding.viewPager) { tab, position ->
         tab.text = tasksTabHeadings[position]
       }
       .attach()
     taskViewPagerViewModel.livePendingActivitiesCount.observe(viewLifecycleOwner) {
-      binding.tasksTabLayout.getTabAt(0)?.text = "Pending Activities ($it)"
+      binding.activitiesTabLayout.getTabAt(0)?.text = "Pending Activities ($it)"
     }
     taskViewPagerViewModel.liveCompletedActivitiesCount.observe(viewLifecycleOwner) {
-      binding.tasksTabLayout.getTabAt(1)?.text = "Completed Activities ($it)"
+      binding.activitiesTabLayout.getTabAt(1)?.text = "Completed Activities ($it)"
     }
     taskViewPagerViewModel.getTasksCount(args.patientId)
     taskViewPagerViewModel.getPatientName(args.patientId)
@@ -146,7 +146,7 @@ class TasksViewPagerFragment : Fragment() {
   private fun navigateToQuestionnaireCallback(taskLogicalId: String, questionnaireString: String) {
     findNavController()
       .navigate(
-        TasksViewPagerFragmentDirections.actionPatientDetailsToScreenEncounterFragment(
+        ActivitiesViewPagerFragmentDirections.actionPatientDetailsToScreenEncounterFragment(
           args.patientId,
           taskLogicalId,
           questionnaireString

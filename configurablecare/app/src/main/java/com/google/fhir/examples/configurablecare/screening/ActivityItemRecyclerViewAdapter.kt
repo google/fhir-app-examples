@@ -19,31 +19,34 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
-import com.google.fhir.examples.configurablecare.databinding.ItemTaskViewBinding
+import com.google.fhir.examples.configurablecare.databinding.ItemActivityViewBinding
 
-class TaskItemRecyclerViewAdapter(
-  private val onItemClicked: (ListScreeningsViewModel.TaskItem) -> Unit
-) : ListAdapter<ListScreeningsViewModel.TaskItem, TaskItemViewHolder>(TaskItemDiffCallback()) {
+class ActivityItemRecyclerViewAdapter(
+  private val onItemClicked: (ListScreeningsViewModel.ActivityItem) -> Unit
+) :
+  ListAdapter<ListScreeningsViewModel.ActivityItem, ActivityItemViewHolder>(
+    TaskItemDiffCallback()
+  ) {
 
-  class TaskItemDiffCallback : DiffUtil.ItemCallback<ListScreeningsViewModel.TaskItem>() {
+  class TaskItemDiffCallback : DiffUtil.ItemCallback<ListScreeningsViewModel.ActivityItem>() {
     override fun areItemsTheSame(
-      oldItem: ListScreeningsViewModel.TaskItem,
-      newItem: ListScreeningsViewModel.TaskItem
+      oldItem: ListScreeningsViewModel.ActivityItem,
+      newItem: ListScreeningsViewModel.ActivityItem
     ) = oldItem.resourceId == newItem.resourceId
 
     override fun areContentsTheSame(
-      oldItem: ListScreeningsViewModel.TaskItem,
-      newItem: ListScreeningsViewModel.TaskItem
+      oldItem: ListScreeningsViewModel.ActivityItem,
+      newItem: ListScreeningsViewModel.ActivityItem
     ) = oldItem.id == newItem.id && oldItem.status == newItem.status
   }
 
-  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskItemViewHolder {
-    return TaskItemViewHolder(
-      ItemTaskViewBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ActivityItemViewHolder {
+    return ActivityItemViewHolder(
+      ItemActivityViewBinding.inflate(LayoutInflater.from(parent.context), parent, false)
     )
   }
 
-  override fun onBindViewHolder(holder: TaskItemViewHolder, position: Int) {
+  override fun onBindViewHolder(holder: ActivityItemViewHolder, position: Int) {
     val item = currentList[position]
     holder.bindTo(item, onItemClicked)
   }

@@ -36,7 +36,7 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
   private val requestManager =
     FhirApplication.requestManager(getApplication<Application>().applicationContext)
 
-  val liveSearchedTasks = MutableLiveData<List<TaskItem>>()
+  val liveSearchedTasks = MutableLiveData<List<ActivityItem>>()
 
   fun getTasksForPatient(patientId: String, taskStatus: String) {
     viewModelScope.launch {
@@ -90,11 +90,11 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
       liveSearchedTasks.value =
         requests // requestManager.getAllRequestsForPatient(patientId) //, taskStatus)
           .mapIndexed { index, fhirTask ->
-            if (fhirTask is Task) fhirTask.toTaskItem(index + 1)
-            else if (fhirTask is MedicationRequest) fhirTask.toTaskItem(index + 1)
-            else if (fhirTask is ServiceRequest) fhirTask.toTaskItem(index + 1)
+            if (fhirTask is Task) fhirTask.toActivityItem(index + 1)
+            else if (fhirTask is MedicationRequest) fhirTask.toActivityItem(index + 1)
+            else if (fhirTask is ServiceRequest) fhirTask.toActivityItem(index + 1)
             else
-              TaskItem(
+              ActivityItem(
                 id = (index + 1).toString(),
                 resourceType = "null",
                 resourceId = if (fhirTask.hasIdElement()) fhirTask.idElement.idPart else "",
@@ -115,12 +115,12 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
    * Alternatively we could cache the questionnaireStrings for each tasks in this viewModel instead
    * of [runBlocking]
    */
-  fun fetchQuestionnaireString(taskItem: TaskItem): String = runBlocking {
+  fun fetchQuestionnaireString(taskItem: ActivityItem): String = runBlocking {
     val questionnaire = requestManager.fetchQuestionnaire(taskItem.fhirResourceId)
     iParser.encodeResourceToString(questionnaire)
   }
 
-  data class TaskItem(
+  data class ActivityItem(
     val id: String,
     val resourceType: String,
     // for Task/123/... this should be 123
@@ -139,7 +139,7 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
   }
 }
 
-internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
+internal fun Task.toActivityItem(position: Int): ListScreeningsViewModel.ActivityItem {
   val taskResourceId = if (hasIdElement()) idElement.idPart else ""
   val description = if (hasDescription()) "$description [$resourceType]" else ""
   // status and intent are always present
@@ -153,7 +153,7 @@ internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
   val clickable =
     focus.reference.contains("Questionnaire") && taskStatus != TaskStatus.COMPLETED.toCode()
 
-  return ListScreeningsViewModel.TaskItem(
+  return ListScreeningsViewModel.ActivityItem(
     id = position.toString(),
     resourceType = resourceType.toString(),
     resourceId = taskResourceId,
@@ -168,7 +168,7 @@ internal fun Task.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
   )
 }
 
-internal fun ServiceRequest.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
+internal fun ServiceRequest.toActivityItem(position: Int): ListScreeningsViewModel.ActivityItem {
   val taskResourceId = if (hasIdElement()) idElement.idPart else ""
   val description = "Referral for further review [$resourceType]"
   // status and intent are always present
@@ -179,7 +179,7 @@ internal fun ServiceRequest.toTaskItem(position: Int): ListScreeningsViewModel.T
   val owner = "unknown"
   val clickable = false
 
-  return ListScreeningsViewModel.TaskItem(
+  return ListScreeningsViewModel.ActivityItem(
     id = position.toString(),
     resourceType = resourceType.toString(),
     resourceId = taskResourceId,
@@ -194,7 +194,7 @@ internal fun ServiceRequest.toTaskItem(position: Int): ListScreeningsViewModel.T
   )
 }
 
-internal fun MedicationRequest.toTaskItem(position: Int): ListScreeningsViewModel.TaskItem {
+internal fun MedicationRequest.toActivityItem(position: Int): ListScreeningsViewModel.ActivityItem {
   val taskResourceId = if (hasIdElement()) idElement.idPart else ""
   val description =
     if (hasMedicationCodeableConcept() && medicationCodeableConcept.hasCoding())
@@ -217,7 +217,7 @@ internal fun MedicationRequest.toTaskItem(position: Int): ListScreeningsViewMode
       taskStatus == "cancelled" ||
       taskStatus == "on-hold")
 
-  return ListScreeningsViewModel.TaskItem(
+  return ListScreeningsViewModel.ActivityItem(
     id = position.toString(),
     resourceType = resourceType.toString(),
     resourceId = taskResourceId,

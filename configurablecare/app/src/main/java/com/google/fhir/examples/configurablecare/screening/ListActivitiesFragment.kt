@@ -26,13 +26,13 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.fhir.logicalId
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionStatus
 import com.google.fhir.examples.configurablecare.care.CareWorkflowExecutionViewModel
-import com.google.fhir.examples.configurablecare.databinding.FragmentListTasksBinding
+import com.google.fhir.examples.configurablecare.databinding.FragmentListActivitiesBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, String) -> Unit) :
+class ListActivitiesFragment(private val navigateToQuestionnaireCallback: (String, String) -> Unit) :
   Fragment() {
-  private var _binding: FragmentListTasksBinding? = null
+  private var _binding: FragmentListActivitiesBinding? = null
   private val binding
     get() = _binding!!
   private val viewModel by viewModels<ListScreeningsViewModel>()
@@ -49,7 +49,7 @@ class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, St
     container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
-    _binding = FragmentListTasksBinding.inflate(inflater, container, false)
+    _binding = FragmentListActivitiesBinding.inflate(inflater, container, false)
     return binding.root
   }
 
@@ -57,7 +57,7 @@ class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, St
     super.onViewCreated(view, savedInstanceState)
     Timber.d("ListTasksFragment called: onViewCreated")
     val recyclerView = binding.rvTask
-    val adapter = TaskItemRecyclerViewAdapter(::onTaskItemClicked)
+    val adapter = ActivityItemRecyclerViewAdapter(::onTaskItemClicked)
     recyclerView.adapter = adapter
     getTasksForPatient()
     collectWorkflowExecution()
@@ -85,7 +85,7 @@ class ListTasksFragment(private val navigateToQuestionnaireCallback: (String, St
     }
   }
 
-  private fun onTaskItemClicked(taskItem: ListScreeningsViewModel.TaskItem) {
+  private fun onTaskItemClicked(taskItem: ListScreeningsViewModel.ActivityItem) {
     careWorkflowExecutionViewModel.selectedRequestItem = taskItem
     navigateToQuestionnaireCallback(
       taskItem.resourceId,

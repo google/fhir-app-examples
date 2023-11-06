@@ -20,9 +20,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.fhir.examples.configurablecare.R
-import com.google.fhir.examples.configurablecare.databinding.ItemTaskViewBinding
+import com.google.fhir.examples.configurablecare.databinding.ItemActivityViewBinding
 
-class TaskItemViewHolder(binding: ItemTaskViewBinding) : RecyclerView.ViewHolder(binding.root) {
+class ActivityItemViewHolder(binding: ItemActivityViewBinding) :
+  RecyclerView.ViewHolder(binding.root) {
   private val description: TextView = binding.taskDescription
   private val taskStatus: TextView = binding.taskStatus
   private val taskIcon: ImageView = binding.taskIcon
@@ -31,8 +32,8 @@ class TaskItemViewHolder(binding: ItemTaskViewBinding) : RecyclerView.ViewHolder
   private var lastUpdated: TextView = binding.lastUpdated
 
   fun bindTo(
-    taskItem: ListScreeningsViewModel.TaskItem,
-    onItemClicked: (ListScreeningsViewModel.TaskItem) -> Unit
+    taskItem: ListScreeningsViewModel.ActivityItem,
+    onItemClicked: (ListScreeningsViewModel.ActivityItem) -> Unit
   ) {
     this.requestType = taskItem.resourceType
     this.description.text = taskItem.description
@@ -86,7 +87,7 @@ class TaskItemViewHolder(binding: ItemTaskViewBinding) : RecyclerView.ViewHolder
     return date.substring(4, 10) + " " + date.substring(date.length - 4)
   }
 
-  private fun getTransition(taskItem: ListScreeningsViewModel.TaskItem): String {
+  private fun getTransition(taskItem: ListScreeningsViewModel.ActivityItem): String {
     var transition = ""
     if (taskItem.intent == "order") {
       transition = "proposal -> plan -> order -> "

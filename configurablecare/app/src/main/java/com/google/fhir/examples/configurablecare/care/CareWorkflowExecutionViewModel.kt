@@ -51,7 +51,7 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
   var currentStructureMapId: String = ""
   var currentTargetResourceType: String = ""
   lateinit var currentQuestionnaireId: String
-  lateinit var selectedRequestItem: ListScreeningsViewModel.TaskItem
+  lateinit var selectedRequestItem: ListScreeningsViewModel.ActivityItem
 
   /**
    * Shared flow of [CareWorkflowExecutionRequest]. For each collected patient the execution shall

@@ -69,7 +69,7 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
         as Questionnaire
   var structureMapId: String = ""
   var currentTargetResourceType: String = ""
-  lateinit var baseRequest: ListScreeningsViewModel.TaskItem
+  lateinit var baseRequest: ListScreeningsViewModel.ActivityItem
   private var fhirEngine: FhirEngine = FhirApplication.fhirEngine(application.applicationContext)
   private val requestManager: RequestManager =
     FhirApplication.requestManager(application.applicationContext)
@@ -141,9 +141,6 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
 
         questionnaireResponse.id = UUID.randomUUID().toString()
         questionnaireResponse.subject = Reference("Patient/${IdType(patientId).idPart}")
-        println(
-          "QR before SM extraction: ${jsonParser.encodeResourceToString(questionnaireResponse)}"
-        )
 
         val baseElement =
           jsonParser.parseResource(
@@ -156,7 +153,6 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
         if (targetResource is Bundle) {
           println("Target bundle: ${jsonParser.encodeResourceToString(targetResource)}")
 
-          var flag = false
           var savedReference = Reference()
           targetResource.entry.forEach { bundleEntryComponent ->
             val resource = bundleEntryComponent.resource
@@ -164,17 +160,11 @@ class ScreenerViewModel(application: Application, private val state: SavedStateH
               resource.effective = null
             }
             fhirEngine.create(resource)
-            flag = true
             savedReference = Reference("${resource.resourceType}/${IdType(resource.id).idPart}")
           }
-          if (true /*flag*/) {
-            fhirEngine.create(questionnaireResponse)
-
-            _screenerState.value =
-              ScreenerState(isResourceSaved = true, encountersCreated = listOf(savedReference))
-          } else {
-            _screenerState.value = null
-          }
+          fhirEngine.create(questionnaireResponse)
+          _screenerState.value =
+            ScreenerState(isResourceSaved = true, encountersCreated = listOf(savedReference))
         } else if (targetResource is Resource) {
           targetResource.id = UUID.randomUUID().toString()
           println("Resource: ${jsonParser.encodeResourceToString(targetResource)}")
