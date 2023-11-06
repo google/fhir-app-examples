@@ -45,7 +45,6 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
     super.onViewCreated(view, savedInstanceState)
     setUpActionBar()
     setHasOptionsMenu(true)
-    // updateArguments()
     if (savedInstanceState == null) {
       addQuestionnaireFragment()
     }
@@ -78,11 +77,6 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
       setDisplayHomeAsUpEnabled(true)
     }
   }
-
-  // private fun updateArguments() {
-  //   requireArguments()
-  //     .putString(QUESTIONNAIRE_FILE_PATH_KEY, "new-patient-registration-paginated.json")
-  // }
 
   private fun addQuestionnaireFragment() {
     runBlocking {
@@ -141,7 +135,6 @@ class AddPatientFragment : Fragment(R.layout.add_patient_fragment) {
   }
 
   companion object {
-    // const val QUESTIONNAIRE_FILE_PATH_KEY = "questionnaire-file-path-key"
     const val QUESTIONNAIRE_FRAGMENT_TAG = "questionnaire-fragment-tag"
     const val NEW_PATIENT_RESULT_KEY = "newPatientName"
   }
