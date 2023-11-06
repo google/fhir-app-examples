@@ -56,25 +56,7 @@ import org.hl7.fhir.r4.model.UriType
 import org.hl7.fhir.r4.utils.StructureMapUtilities
 import timber.log.Timber
 
-/**
- * Maps a [QuestionnaireResponse] to FHIR resources and vice versa.
- *
- * The process of converting [QuestionnaireResponse] s to other FHIR resources is called
- * [extraction](http://build.fhir.org/ig/HL7/sdc/extraction.html). The reverse process of converting
- * existing FHIR resources to [QuestionnaireResponse] s to be used to pre-fill the UI is called
- * [population](http://build.fhir.org/ig/HL7/sdc/populate.html).
- *
- * This class supports
- * [Definition-based extraction](http://build.fhir.org/ig/HL7/sdc/extraction.html#definition-based-extraction)
- * ,
- * [StructureMap-based extraction](http://hl7.org/fhir/uv/sdc/extraction.html#structuremap-based-extraction)
- * , and
- * [expression-based population](http://build.fhir.org/ig/HL7/sdc/populate.html#expression-based-population)
- * .
- *
- * See the [developer guide](https://github.com/google/android-fhir/wiki/SDCL%3A-Use-ResourceMapper)
- * for more information.
- */
+/** This is a modified version of the Resource Mapper in SDC library based on https://github.com/google/android-fhir/pull/2270 */
 object CustomResourceMapper {
 
   /**
