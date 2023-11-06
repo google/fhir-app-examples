@@ -21,7 +21,7 @@ Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 
 ## Possible Outcomes for the WHO SMART Immunization Guidelines
 
-### Outcome I - Successful administration of the Measles vaccine
+### Outcome 1 - Successful administration of the Measles vaccine
 1. Launch the `configurablecare` app in Android Studio with a connected Android device
 2. Open logcat tab in Android Studio and wait until you see this message: `com.google.android.fhir.configurablecare  I  init`. _(You may use `system.out` as a filter to observe the logs better.)_
 3. Click on "Register new patient" and complete the questionnaire to create new patient (infant) with basic information. [Suggested DOB: 02-02-2023]
@@ -39,25 +39,31 @@ Start the Android Studio emulator, and click Run in the Android Studio toolbar.
 15. Now you will notice that all pending activities have been completed. Observe the completed activities as well and take note of the transition from proposal -> plan -> order -> completed
 16. Go back to the Patient card and notice that the "Immunization Records" section now has a new item added with the details of this vaccine.
 
+https://github.com/divyaramnath-13/fhir-app-examples/assets/112697704/0be5febc-e5c1-4822-9a2d-95626343582f
 
-### Outcome II - Vaccine administration is blocked due to patient being contraindicated
+
+### Outcome 2 - Vaccine administration is blocked due to patient being contraindicated
 1. Follow steps 1-10 from Exercise 1
 2. Instead of submitting an empty questionnaire, select the following contraindications: "Severely immunosuppressed", "History of anaphylactic reactions" and "Severe allergic reactions" and click on submit.
 3. You will notice that there are no more pending activities. If you take a look at the completed activities, you will notice a MedicationRequest with the status "Do Not Perform".
 4. Go back to the Patient card and notice that the "Alerts" section now has a record that the measles vaccine should not be administered to this patient.
 
+https://github.com/divyaramnath-13/fhir-app-examples/assets/112697704/52e99b28-a406-4b56-ba4c-c1c7187fcf77
 
-### Outcome III - Vaccine administration is temporarily on hold (soft contraindication) until a clinical review has been completed [out-of-scope]
+### Outcome 3 - Vaccine administration is temporarily on hold (soft contraindication) until a clinical review has been completed [out-of-scope]
 1. Follow steps 1-10 from Exercise 1
 2. Instead of submitting an empty questionnaire, select the following contraindication: "History of anaphylactic reactions" and click on submit.
 3. You will notice that the Medication Request activity is now on-hold until the patient's records have been reviewed
 
+https://github.com/divyaramnath-13/fhir-app-examples/assets/112697704/c5cbb110-2bf3-4ff9-86f7-dedd4c4adcdd
 
-### Outcome IV - Rejection of the proposal to administer the Measles vaccine
+
+### Outcome 4 - Rejection of the proposal to administer the Measles vaccine
 1. Follow steps 1-8 from Exercise 1
 2. A questionnaire will open up that asks you whether you want to accept this proposal. Click on "No", provide a reason and submit.
 3. You will notice that all pending activities have been completed. In the completed activities section, the Medication Request activity is marked as cancelled due to rejection of the proposal.
 
+https://github.com/divyaramnath-13/fhir-app-examples/assets/112697704/79a9b5ce-9ca2-4778-8438-4e87712211fb
 
 ## Disclaimer
 This product is not intended to be a medical device.
