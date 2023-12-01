@@ -63,15 +63,6 @@ public class TransformSupportServicesMatchBox implements StructureMapUtilities.I
     public Base resolveReference(Object appContext, String url) throws FHIRException {
         org.hl7.fhir.r4.model.Resource resource = context.fetchResource(org.hl7.fhir.r4.model.Resource.class, url);
         return resource;
-//    if (resource != null) {
-//      String inStr = FhirContext.forR4Cached().newJsonParser().encodeResourceToString(resource);
-//      try {
-//        return Manager.parseSingle(context, new ByteArrayInputStream(inStr.getBytes()), FhirFormat.JSON);
-//      } catch (IOException e) {
-//        throw new FHIRException("Cannot convert resource to element model");
-//      }
-//    }
-//    throw new FHIRException("resolveReference, url not found: " + url);
     }
 
     @Override
