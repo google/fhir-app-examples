@@ -34,8 +34,8 @@ import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
-import org.hl7.fhir.r4.model.Condition
-import org.hl7.fhir.r4.model.Observation
+import org.hl7.fhir.r4.model.Immunization
+import org.hl7.fhir.r4.model.MedicationRequest
 import org.hl7.fhir.r4.model.Patient
 
 /**
@@ -59,31 +59,36 @@ class PatientDetailsViewModel(
     return patient.toPatientItem(0)
   }
 
-  private suspend fun getPatientObservations(): List<PatientListViewModel.ObservationItem> {
-    val observations: MutableList<PatientListViewModel.ObservationItem> = mutableListOf()
+  private suspend fun getPatientImmunizationRecords(): List<PatientListViewModel.ImmunizationItem> {
+    val immunizations: MutableList<PatientListViewModel.ImmunizationItem> = mutableListOf()
     fhirEngine
-      .search<Observation> { filter(Observation.SUBJECT, { value = "Patient/$patientId" }) }
+      .search<Immunization> { filter(Immunization.PATIENT, { value = "Patient/$patientId" }) }
       .take(MAX_RESOURCE_COUNT)
-      .map { createObservationItem(it.resource, getApplication<Application>().resources) }
-      .let { observations.addAll(it) }
-    return observations
+      .map { createImmunizationItem(it.resource, getApplication<Application>().resources) }
+      .let { immunizations.addAll(it) }
+    return immunizations
   }
 
-  private suspend fun getPatientConditions(): List<PatientListViewModel.ConditionItem> {
-    val conditions: MutableList<PatientListViewModel.ConditionItem> = mutableListOf()
+  private suspend fun getPatientMedicalAlerts(): List<PatientListViewModel.MedicalAlertItem> {
+    val medicationRequests: MutableList<PatientListViewModel.MedicalAlertItem> = mutableListOf()
     fhirEngine
-      .search<Condition> { filter(Condition.SUBJECT, { value = "Patient/$patientId" }) }
-      .take(MAX_RESOURCE_COUNT)
-      .map { createConditionItem(it.resource, getApplication<Application>().resources) }
-      .let { conditions.addAll(it) }
-    return conditions
+      .search<MedicationRequest> {
+        filter(MedicationRequest.SUBJECT, { value = "Patient/$patientId" })
+      }
+      .filter {
+        it.resource.doNotPerform &&
+          it.resource.intent == MedicationRequest.MedicationRequestIntent.ORDER
+      }
+      .map { createMedicalAlertItem(it.resource, getApplication<Application>().resources) }
+      .let { medicationRequests.addAll(it) }
+    return medicationRequests
   }
 
   private suspend fun getPatientDetailDataModel(): List<PatientDetailData> {
     val data = mutableListOf<PatientDetailData>()
     val patient = getPatient()
-    val observations = getPatientObservations()
-    val conditions = getPatientConditions()
+    val immunizationRecords = getPatientImmunizationRecords()
+    val medicalAlerts = getPatientMedicalAlerts()
 
     patient.let { patientItem ->
       data.add(PatientDetailOverview(patientItem, firstInGroup = true))
@@ -113,28 +118,28 @@ class PatientDetailsViewModel(
       )
     }
 
-    if (observations.isNotEmpty()) {
-      data.add(PatientDetailHeader(getString(R.string.header_observation)))
+    if (immunizationRecords.isNotEmpty()) {
+      data.add(PatientDetailHeader(getString(R.string.header_immunization)))
 
-      val observationDataModel =
-        observations.mapIndexed { index, observationItem ->
+      val immunizationDataModel =
+        immunizationRecords.mapIndexed { index, immunizationItem ->
           PatientDetailObservation(
-            observationItem,
+            immunizationItem,
             firstInGroup = index == 0,
-            lastInGroup = index == observations.size - 1
+            lastInGroup = index == immunizationRecords.size - 1
           )
         }
-      data.addAll(observationDataModel)
+      data.addAll(immunizationDataModel)
     }
 
-    if (conditions.isNotEmpty()) {
+    if (medicalAlerts.isNotEmpty()) {
       data.add(PatientDetailHeader(getString(R.string.header_conditions)))
       val conditionDataModel =
-        conditions.mapIndexed { index, conditionItem ->
+        medicalAlerts.mapIndexed { index, conditionItem ->
           PatientDetailCondition(
             conditionItem,
             firstInGroup = index == 0,
-            lastInGroup = index == conditions.size - 1
+            lastInGroup = index == medicalAlerts.size - 1
           )
         }
       data.addAll(conditionDataModel)
@@ -160,68 +165,45 @@ class PatientDetailsViewModel(
     /**
      * Creates ObservationItem objects with displayable values from the Fhir Observation objects.
      */
-    private fun createObservationItem(
-      observation: Observation,
+    private fun createImmunizationItem(
+      immunization: Immunization,
       resources: Resources
-    ): PatientListViewModel.ObservationItem {
-      val observationCode = observation.code.text ?: observation.code.codingFirstRep.display
+    ): PatientListViewModel.ImmunizationItem {
+      var immunizationCode = ""
+      var immunizationDisplay = ""
 
-      // Show nothing if no values available for datetime and value quantity.
-      val dateTimeString =
-        if (observation.hasEffectiveDateTimeType()) {
-          observation.effectiveDateTimeType.asStringValue()
-        } else {
-          resources.getText(R.string.message_no_datetime).toString()
-        }
-      val value =
-        if (observation.hasValueQuantity()) {
-          observation.valueQuantity.value.toString()
-        } else if (observation.hasValueCodeableConcept()) {
-          observation.valueCodeableConcept.coding.firstOrNull()?.display ?: ""
-        } else {
-          ""
-        }
-      val valueUnit =
-        if (observation.hasValueQuantity()) {
-          observation.valueQuantity.unit ?: observation.valueQuantity.code
-        } else {
-          ""
-        }
-      val valueString = "$value $valueUnit"
+      if (immunization.hasVaccineCode() && immunization.vaccineCode.hasCoding()) {
+        immunizationCode = immunization.vaccineCode.codingFirstRep.code
+        immunizationDisplay = immunization.vaccineCode.codingFirstRep.display
+      }
 
-      return PatientListViewModel.ObservationItem(
-        observation.logicalId,
-        observationCode,
-        dateTimeString,
-        valueString
+      return PatientListViewModel.ImmunizationItem(
+        immunization.logicalId,
+        "$immunizationDisplay: $immunizationCode | Lot: ${immunization.lotNumber}",
+        immunizationDisplay,
+        "${immunization.meta.lastUpdated}"
       )
     }
 
-    /** Creates ConditionItem objects with displayable values from the Fhir Condition objects. */
-    private fun createConditionItem(
-      condition: Condition,
+    /**
+     * Creates MedicalAlertItem objects which displays MedicationRequest resources for which
+     * doNotSubmit is true.
+     */
+    private fun createMedicalAlertItem(
+      medicationRequest: MedicationRequest,
       resources: Resources
-    ): PatientListViewModel.ConditionItem {
-      val observationCode = condition.code.text ?: condition.code.codingFirstRep.display ?: ""
+    ): PatientListViewModel.MedicalAlertItem {
+      val code = medicationRequest.medicationCodeableConcept.codingFirstRep.code
+      val display = medicationRequest.medicationCodeableConcept.codingFirstRep.display
 
       // Show nothing if no values available for datetime and value quantity.
-      val dateTimeString =
-        if (condition.hasOnsetDateTimeType()) {
-          condition.onsetDateTimeType.asStringValue()
-        } else {
-          resources.getText(R.string.message_no_datetime).toString()
-        }
-      val value =
-        if (condition.hasVerificationStatus()) {
-          condition.verificationStatus.codingFirstRep.code
-        } else {
-          ""
-        }
-      return PatientListViewModel.ConditionItem(
-        condition.logicalId,
-        observationCode,
-        dateTimeString,
-        value
+      val medicationRequestDisplay = "$display [$code]: DO NOT PERFORM"
+
+      return PatientListViewModel.MedicalAlertItem(
+        medicationRequest.logicalId,
+        medicationRequestDisplay,
+        "",
+        "${medicationRequest.meta.lastUpdated}"
       )
     }
   }
@@ -251,13 +233,13 @@ data class PatientDetailOverview(
 ) : PatientDetailData
 
 data class PatientDetailObservation(
-  val observation: PatientListViewModel.ObservationItem,
+  val observation: PatientListViewModel.ImmunizationItem,
   override val firstInGroup: Boolean = false,
   override val lastInGroup: Boolean = false
 ) : PatientDetailData
 
 data class PatientDetailCondition(
-  val condition: PatientListViewModel.ConditionItem,
+  val condition: PatientListViewModel.MedicalAlertItem,
   override val firstInGroup: Boolean = false,
   override val lastInGroup: Boolean = false
 ) : PatientDetailData

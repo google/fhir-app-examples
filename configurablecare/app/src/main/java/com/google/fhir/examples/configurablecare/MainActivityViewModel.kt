@@ -47,8 +47,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
   val pollState: Flow<SyncJobStatus>
     get() = _pollState
 
+  private val carePlanManager =
+    FhirApplication.carePlanManager(getApplication<Application>().applicationContext)
+
   init {
     viewModelScope.launch {
+      carePlanManager.fetchKnowledgeResources("smart-imm-measles/ig")
       Sync.periodicSync<FhirSyncWorker>(
           application.applicationContext,
           PeriodicSyncConfiguration(

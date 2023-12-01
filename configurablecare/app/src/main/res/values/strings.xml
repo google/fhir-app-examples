@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 <resources>
-    <string name="app_name">User App</string>
+    <string name="app_name">Configurable Care</string>
 
     <string name="title_patient_list">Patient List</string>
     <string name="title_patient_detail">SamplePatient Detail</string>
@@ -24,7 +24,7 @@
     <string name="menu_patient_edit">@string/edit_patient</string>
 
     <!-- For display observations in brief, for a patient -->
-    <string name="observation_brief_text">%1$s: %2$s\nEffective: %3$s</string>
+    <string name="immunization_brief_text">%1$s: %2$s\nEffective: %3$s</string>
     <string name="query_hint_patient_search">Find by Patient Name</string>
     <string
         name="cancel_questionnaire_message"
@@ -56,11 +56,11 @@
     <string name="html_text">Current status: <font
             color="#ddd"
         >UNKNOWN</font></string>
-    <string name="header_observation">Observations</string>
-    <string name="header_conditions">Conditions</string>
+    <string name="header_immunization">Immunization Records</string>
+    <string name="header_conditions">Alerts</string>
     <string name="message_no_datetime">No effective DateTime</string>
     <string name="complete_survey">Complete Survey</string>
-    <string name="tasks_due">Go To Tasks</string>
+    <string name="tasks_due">Careplan Activities</string>
     <string name="risk_status">Current status: </string>
     <string name="unknown">UNKNOWN</string>
     <string name="none">none</string>
@@ -70,8 +70,8 @@
     <string name="sync_menu">Sync</string>
     <string name="last_sync">Last sync</string>
     <string name="syncing">Syncing</string>
-    <string name="tasks_updated">Tasks Updated</string>
-    <string name="updating_tasks">Updating Tasks</string>
+    <string name="tasks_updated">Activities Updated</string>
+    <string name="updating_tasks">Updating Activities</string>
     <string name="sync">Sync</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

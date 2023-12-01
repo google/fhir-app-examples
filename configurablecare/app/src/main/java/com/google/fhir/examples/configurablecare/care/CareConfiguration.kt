@@ -31,11 +31,28 @@ data class RequestResourceConfig(
   data class Value(var field: String, var value: String)
 }
 
+data class RequestConfiguration(
+  var requestType: String,
+  var intentConditions: List<IntentCondition>
+) {
+  data class IntentCondition(var intent: String, var action: String, var condition: String)
+}
+
 class ImplementationGuideConfig(
   var implementationGuideId: String,
+  var patientRegistrationQuestionnaire: String,
   var entryPoint: String,
   var requestResourceConfigurations: List<RequestResourceConfig>,
-  var supportedValueSets: JsonArray
+  var requestConfigurations: List<RequestConfiguration>,
+  var supportedValueSets: JsonArray,
+  var triggers: List<Trigger>
+)
+
+data class Trigger(
+  var event: String,
+  var planDefinition: String,
+  var structureMap: String,
+  var targetResourceType: String
 )
 
 data class SupportedImplementationGuide(

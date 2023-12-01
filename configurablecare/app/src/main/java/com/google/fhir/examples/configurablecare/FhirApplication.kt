@@ -29,20 +29,30 @@ import com.google.android.fhir.search.search
 import com.google.android.fhir.sync.Sync
 import com.google.android.fhir.sync.remote.HttpLogger
 import com.google.fhir.examples.configurablecare.care.CarePlanManager
-import com.google.fhir.examples.configurablecare.care.TaskManager
+import com.google.fhir.examples.configurablecare.care.RequestManager
+import com.google.fhir.examples.configurablecare.care.TestRequestHandler
 import com.google.fhir.examples.configurablecare.data.FhirSyncWorker
 import com.google.fhir.examples.configurablecare.external.ValueSetResolver
+import com.google.fhir.examples.configurablecare.util.ComplexWorkerContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import org.hl7.fhir.utilities.npm.NpmPackage
 import timber.log.Timber
 
 class FhirApplication : Application(), DataCaptureConfig.Provider {
-  private val BASE_URL = "http://10.0.2.2:8080/fhir/"
+  private val BASE_URL = "https://192.168.1.100:8080/fhir/"
+  // "http://10.0.2.2:8080/fhir/"
   // Only initiate the FhirEngine when used for the first time, not when the app is created.
   private val fhirEngine: FhirEngine by lazy { constructFhirEngine() }
-  private val taskManager: TaskManager by lazy { constructTaskManager() }
   private val carePlanManager: CarePlanManager by lazy { constructCarePlanManager() }
+  private val requestManager: RequestManager by lazy { constructRequestManager() }
   private var dataCaptureConfig: DataCaptureConfig? = null
 
   private val dataStore by lazy { DemoDataStore(this) }
+
+  private var contextR4: ComplexWorkerContext? = null
 
   override fun onCreate() {
     super.onCreate()
@@ -64,15 +74,15 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
         )
       )
     )
+    constructR4Context()
     Sync.oneTimeSync<FhirSyncWorker>(this)
 
     dataCaptureConfig =
       DataCaptureConfig().apply {
         urlResolver = ReferenceUrlResolver(this@FhirApplication as Context)
         valueSetResolverExternal = object : ValueSetResolver() {}
-        xFhirQueryResolver = XFhirQueryResolver { fhirEngine.search(it).map { it.resource } }
+        xFhirQueryResolver = XFhirQueryResolver { it -> fhirEngine.search(it).map { it.resource } }
       }
-    ValueSetResolver.init(this@FhirApplication)
   }
 
   private fun constructFhirEngine(): FhirEngine {
@@ -83,9 +93,30 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
     return CarePlanManager(fhirEngine, FhirContext.forR4(), this)
   }
 
-  private fun constructTaskManager(): TaskManager {
-    return TaskManager(fhirEngine)
+  private fun constructRequestManager(): RequestManager {
+    return RequestManager(fhirEngine, FhirContext.forR4(), TestRequestHandler())
   }
+
+  private fun constructR4Context() =
+    CoroutineScope(Dispatchers.IO).launch {
+      println("**** creating contextR4")
+
+      val measlesIg = async {
+        NpmPackage.fromPackage(assets.open("smart-imm-measles/ig/package.r4.tgz"))
+      }
+
+      val baseIg = async { NpmPackage.fromPackage(assets.open("package.tgz")) }
+
+      val packages = arrayListOf<NpmPackage>(measlesIg.await(), baseIg.await())
+
+      println("**** read assets contextR4")
+      contextR4 = ComplexWorkerContext()
+      contextR4?.apply {
+        loadFromMultiplePackages(packages, true)
+        println("**** created contextR4")
+        ValueSetResolver.init(this@FhirApplication, this)
+      }
+    }
 
   companion object {
     fun fhirEngine(context: Context) = (context.applicationContext as FhirApplication).fhirEngine
@@ -95,7 +126,10 @@ class FhirApplication : Application(), DataCaptureConfig.Provider {
     fun carePlanManager(context: Context) =
       (context.applicationContext as FhirApplication).carePlanManager
 
-    fun taskManager(context: Context) = (context.applicationContext as FhirApplication).taskManager
+    fun requestManager(context: Context) =
+      (context.applicationContext as FhirApplication).requestManager
+
+    fun contextR4(context: Context) = (context.applicationContext as FhirApplication).contextR4
   }
 
   override fun getDataCaptureConfig(): DataCaptureConfig = dataCaptureConfig ?: DataCaptureConfig()
