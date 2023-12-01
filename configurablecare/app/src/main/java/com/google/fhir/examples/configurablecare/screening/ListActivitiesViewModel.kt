@@ -88,7 +88,7 @@ class ListScreeningsViewModel(application: Application) : AndroidViewModel(appli
         requests = orders + proposals + plans + miscRequests
       }
       liveSearchedTasks.value =
-        requests // requestManager.getAllRequestsForPatient(patientId) //, taskStatus)
+        requests
           .mapIndexed { index, fhirTask ->
             if (fhirTask is Task) fhirTask.toActivityItem(index + 1)
             else if (fhirTask is MedicationRequest) fhirTask.toActivityItem(index + 1)
