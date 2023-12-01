@@ -54,7 +54,6 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
   AndroidViewModel(application) {
 
   var questionnaire: String = ""
-  // get() = getQuestionnaireJson()
   var savedPatient = MutableLiveData<Patient?>()
   var structureMapId: String = ""
   var currentTargetResourceType: String = ""
