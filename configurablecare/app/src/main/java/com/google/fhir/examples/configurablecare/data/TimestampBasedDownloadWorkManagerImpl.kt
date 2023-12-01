@@ -163,8 +163,6 @@ class TimestampBasedDownloadWorkManagerImpl(
       is PlanDefinition -> return extractPlanDefinitionDependentResources(resource)
       is CarePlan -> return extractCarePlanDependentResources(resource)
       is Encounter -> return addEncounterRelatedResources(resource)
-    // is Library -> return carePlanManager.installKnowledgeResource(resource)
-    // is ActivityDefinition -> return carePlanManager.installKnowledgeResource(resource)
     }
     return emptyList()
   }
