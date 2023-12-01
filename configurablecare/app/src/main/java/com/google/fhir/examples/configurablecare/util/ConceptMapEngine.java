@@ -57,10 +57,6 @@ public class ConceptMapEngine {
         return new Coding().setSystem(cp.getUrl()).setVersion(cp.getVersion()).setCode(tt.getCode()).setDisplay(tt.getDisplay());
     }
 
-//    private boolean isOkRelationship(ConceptMapRelationship relationship) {
-//        return relationship != null && relationship != ConceptMapRelationship.NOTRELATEDTO;
-//    }
-
     private Coding translateBySystem(ConceptMap cm, String system, String code) {
         throw new Error("Not done yet");
     }
