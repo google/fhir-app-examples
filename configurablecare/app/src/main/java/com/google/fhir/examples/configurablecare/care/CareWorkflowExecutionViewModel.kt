@@ -82,7 +82,6 @@ class CareWorkflowExecutionViewModel(application: Application) : AndroidViewMode
          * exhaustion.
          */
         runBlocking {
-          // carePlanManager.smartIgTest()
           if (currentPlanDefinitionId != "") {
             if (currentPlanDefinitionId.contains("CreateImmunizationRecord")) {} else {
               println("About to apply $currentPlanDefinitionId")
