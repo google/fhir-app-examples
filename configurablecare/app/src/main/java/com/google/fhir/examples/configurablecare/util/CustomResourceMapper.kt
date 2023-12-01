@@ -15,15 +15,6 @@
  */
 package com.google.fhir.examples.configurablecare.util
 
-// import com.google.android.fhir.datacapture.mapping.StructureMapExtractionContext
-// import com.google.android.fhir.datacapture.extensions.initialExpression
-// import com.google.android.fhir.datacapture.extensions.logicalId
-// import com.google.android.fhir.datacapture.extensions.targetStructureMap
-// import com.google.android.fhir.datacapture.extensions.toCodeType
-// import com.google.android.fhir.datacapture.extensions.toCoding
-// import com.google.android.fhir.datacapture.extensions.toIdType
-// import com.google.android.fhir.datacapture.extensions.toUriType
-// import com.google.android.fhir.datacapture.fhirpath.fhirPathEngine
 import com.google.android.fhir.datacapture.extensions.targetStructureMap
 import com.google.android.fhir.datacapture.mapping.ProfileLoader
 import java.lang.reflect.Field
