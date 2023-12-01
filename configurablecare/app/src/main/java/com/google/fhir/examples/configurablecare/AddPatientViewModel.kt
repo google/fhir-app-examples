@@ -64,7 +64,6 @@ class AddPatientViewModel(application: Application, private val state: SavedStat
       FhirContext.forCached(FhirVersionEnum.R4).newJsonParser().parseResource(questionnaire)
         as Questionnaire
   private var fhirEngine: FhirEngine = FhirApplication.fhirEngine(application.applicationContext)
-  // private var questionnaireJson: String? = null
 
   /**
    * Saves patient registration questionnaire response into the application database.
